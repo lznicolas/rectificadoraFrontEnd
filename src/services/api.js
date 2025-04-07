@@ -37,7 +37,7 @@ export const actualizarStock = async (codigo,nuevaCantidad)=>{
     console.error("Error al actulizar Stock",error);
     throw error;
   }
-}
+};
 
 //Obtiene el Stock
 export const obtenerStock = async (codigo) => {
@@ -49,3 +49,31 @@ export const obtenerStock = async (codigo) => {
     return null;
   }
 };
+
+export async function agregarRepuesto(repuesto) {
+  try{
+    console.log("Enviando repuesto",repuesto)
+    const response = await axios.post("http://localhost:8080/api/repuestos",{
+      method:'POST', 
+      headers:{'Content-Type':'application/json',
+      }, 
+      body: JSON.stringify(repuesto),
+    });
+    if(!response.ok){
+      throw new Error('Error al agregar el repuesto');
+    }
+    return await response.json();
+
+  }catch(error){
+    console.error('Error en agregar Repuesto',error);
+    throw error;
+  }
+  
+}
+//Elimina un Repuesto
+// export const eliminaRepuesto = async(id)=>{
+//   try{
+//     const response = await axios.delete(`${API_URL}/${id}`)
+//     return response.data;
+//   }
+// }
