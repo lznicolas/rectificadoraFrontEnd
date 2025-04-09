@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { actualizarRepuesto, actualizarStock, obtenerRepuestos,obtenerStock,agregarRepuesto } from "../services/api";
+import { actualizarRepuesto, actualizarStock, obtenerRepuestos,obtenerStock,agregarRepuesto, eliminarRepuesto } from "../services/api";
 import TablaRepuestos from "../components/TablaRepuestos";
-import { Container, Typography,Modal,Box,TextField,Button } from "@mui/material";
+import { Container, Typography,Modal,Box,TextField,Button, FormControl, MenuItem,Select,InputLabel } from "@mui/material";
 import SearchBar from "../components/SearchBar";
 import CreateButton from "../components/CreateButton";
 const Repuestos = () => {
   const [repuestos, setRepuestos] = useState([]);
+  const [todosLosRepuestos, setTodosLosRepuestos] = useState([]);
   const [modalOpen,setModalOpen] = useState(false);
   const [repuestoSeleccionado, setRepuestosSeleccionado] = useState(null);
   const [searchText, setSearchText] = useState("");
@@ -14,7 +15,7 @@ const Repuestos = () => {
     titulo:"",
     descripcion:"",
     ubicacion:"",
-    codigo:""
+    codigoDeProducto:""
   });
 
 //Cargar repuesto al inicio
@@ -24,6 +25,7 @@ const Repuestos = () => {
         const data = await obtenerRepuestos();
         console.log("Datos obtenidos",data);
         setRepuestos(data);
+        setTodosLosRepuestos(data);
       }catch(error){
         console.error("Error obteniendo respuestos", error)
       } 
@@ -33,20 +35,16 @@ const Repuestos = () => {
 
   //Filtrar repuesto cuando cambia searchText(Barra de busqueda)
   useEffect(()=> {
-    const fetchFilteredData = async()=>{
-      if (searchText.trim()===""){
-        const data = await obtenerRepuestos();
-        setRepuestos(data);
-        }else{
-          const filtered = repuestos.filter(rep =>
-          rep.titulo.toLowerCase().includes(searchText.toLowerCase())||
-          rep.codigo.toLowerCase().includes(searchText.toLowerCase())
-          );
-          setFilteredRepuesto(filtered); 
-      }
-    };
-    fetchFilteredData();      
-  },[searchText]);
+    if (searchText.trim() === ""){
+      setRepuestos(todosLosRepuestos);
+    }else{
+      const filtered = todosLosRepuestos.filter((rep)=>
+      rep.titulo.toLowerCase().includes(searchText.toLowerCase())||
+    rep.codigoDeProducto.toLowerCase().includes(searchText.toLowerCase())
+  );
+  setRepuestos(filtered);
+    }
+  },[searchText, todosLosRepuestos]);
 
   //Funcion para editar repuesto | Abrir el modal con los datos del repuesto
   const handleEditar = (repuesto) => {
@@ -71,7 +69,7 @@ const Repuestos = () => {
 
   //Modal creacion de repuesto
   const handleOpenAgregarModal=()=>{
-    setNuevoRepuesto({titulo:"",descripcion:"",ubicacion:"",codigo:""});
+    setNuevoRepuesto({titulo:"",descripcion:"",ubicacion:"",codigoDeProducto:""});
     setModalAgregaOpen(true);
   };
 
@@ -118,11 +116,6 @@ const Repuestos = () => {
     }
   };
 
-  //Funcion para eliminar
-  const handleEliminar = (repuesto) =>{
-    alert (`Eliminar repuesto con ID: ${repuesto.id}`)
-  };
-  
   //Funcion para ver y actualizar el stock
   const handleActualizarStock = async (codigo)=>{
     const stockResponse = await obtenerStock(codigo);
@@ -144,7 +137,18 @@ const Repuestos = () => {
     }
   };
     
-
+//Eliminar Repuesto
+  const handleEliminar = async(repuesto)=>{
+    const confirmar = window.confirm(`Estas seguro de que deseas eliminar el repuesto: ${repuesto.titulo}?`);
+    if (!confirmar) return
+    try{
+      await eliminarRepuesto(repuesto.id);
+      setRepuestos(prev => prev.filter(r => r.id !== repuesto.id));
+      alert("Repuesto eliminado de forma correcta");
+    }catch(error){
+      alert("Error al eliminar el repuesto");
+    }
+  };
   
 
   return (
@@ -164,7 +168,18 @@ const Repuestos = () => {
           <Typography variant="h6" sx={{ color: "black" }}>Editar Repuesto</Typography>
           <TextField fullWidth margin="normal" label="Título" name="titulo" value={repuestoSeleccionado?.titulo || ""} onChange={handleChange} />
           <TextField fullWidth margin="normal" label="Descripción" name="descripcion" value={repuestoSeleccionado?.descripcion || ""} onChange={handleChange} />
-          <TextField fullWidth margin="normal" label="Ubicación" name="ubicacion" value={repuestoSeleccionado?.ubicacion || ""} onChange={handleChange} />
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Ubicacion</InputLabel>
+            <Select name="ubicacion"
+                    value={nuevoRepuesto.ubicacion}
+                    label="Ubicacion"
+                    onChange={handleChange}>
+                      <MenuItem value="ALTA">ALTA</MenuItem>
+                      <MenuItem value="MEDIA">MEDIA</MenuItem>
+                      <MenuItem value="BAJA">BAJA</MenuItem>
+                      <MenuItem value="NINGUNA">NINGUNA</MenuItem>
+                    </Select>
+          </FormControl>
           <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, marginTop: 2 }}>
             <Button variant="contained" color="primary" onClick={handleGuardar}>Guardar</Button>
             <Button variant="outlined" color="secondary" onClick={handleCloseModal}>Cancelar</Button>
@@ -177,8 +192,19 @@ const Repuestos = () => {
           <Typography variant="h6" sx={{color : "black"}}>Agregar Repuesto</Typography>
           <TextField fullWidth margin="normal" label="Título" name="titulo" value={nuevoRepuesto.titulo} onChange={handleChangeNuevoRepuesto} />
           <TextField fullWidth margin="normal" label="Descripción" name="descripcion" value={nuevoRepuesto.descripcion} onChange={handleChangeNuevoRepuesto} />
-          <TextField fullWidth margin="normal" label="Ubicación" name="ubicacion" value={nuevoRepuesto.ubicacion} onChange={handleChangeNuevoRepuesto} />
-          <TextField fullWidth margin="normal" label="Código" name="codigo" value={nuevoRepuesto.codigo} onChange={handleChangeNuevoRepuesto} />
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Ubicacion</InputLabel>
+            <Select name="ubicacion"
+                    value={nuevoRepuesto.ubicacion}
+                    label="Ubicacion"
+                    onChange={handleChangeNuevoRepuesto}>
+                      <MenuItem value="ALTA">ALTA</MenuItem>
+                      <MenuItem value="MEDIA">MEDIA</MenuItem>
+                      <MenuItem value="BAJA">BAJA</MenuItem>
+                      <MenuItem value="NINGUNA">NINGUNA</MenuItem>
+                    </Select>
+          </FormControl>
+          <TextField fullWidth margin="normal" label="Código" name="codigoDeProducto" value={nuevoRepuesto.codigoDeProducto} onChange={handleChangeNuevoRepuesto} />
           <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, marginTop: 2 }}>
             <Button variant="contained" color="primary" onClick={handleGuardarNuevoRepuesto}>Guardar</Button>
             <Button variant="outlined" color="secondary" onClick={handleCloseAgregarModal}>Cancelar</Button>
