@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { AppBar,Button,IconButton,Menu,MenuItem,Toolbar,Typography,Box } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 
+
 const Header= () =>{
     const [anchorEl, setAnchorEl] = useState(null);
     const open = Boolean(anchorEl);
@@ -45,7 +46,7 @@ const Header= () =>{
                     <MenuItem onClick={handleClose}>Contacto</MenuItem>
                 </Menu>
                 <Typography variant="h6" sx={{flexGrow: 1, textAlign: "center"}}>
-                    Taller Rectificadora El Pepe
+                    Taller Rectificadora MOYANO
                 </Typography>
                 <Box sx={{display:{xs:"none",md:"flex"}}}>
                     <Button color="inherit">Sobre Nosotros</Button>

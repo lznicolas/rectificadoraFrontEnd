@@ -4,6 +4,8 @@ import { Box, CssBaseline } from "@mui/material";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Repuestos from "./pages/Repuestos";
+import Presentacion from "./pages/Presentacion";
+import FormularioCliente from "./pages/FormularioCliente";
 
 function App() {
   return (
@@ -16,7 +18,9 @@ function App() {
         {/* Contenido principal centrado */}
         <Box sx={{ flexGrow: 1, display: "flex", justifyContent: "center", alignItems: "center", padding: 3 }}>
           <Routes>
-            <Route path="/" element={<Repuestos />} />
+            <Route path="/repuesto" element={<Repuestos />} />
+            <Route path="/home" element={<Presentacion />}/>
+            <Route path="/formcliente" element={<FormularioCliente />} />
           </Routes>
         </Box>
 
