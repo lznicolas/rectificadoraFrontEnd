@@ -70,4 +70,16 @@ export async function eliminarRepuesto(id) {
     console.error("Error eliminando Repuesto", error);
     throw error;
   }
+
+}
+
+//Agrega empleado
+export async function agregaEmpleado(id){
+  try {
+    const response = await axios.post(`${API_URL}/${id}`);
+    return response.data;
+  }catch(error){
+    console.error ("Error al intentar agregar un empleado",error);
+    throw error;
+  }
 }

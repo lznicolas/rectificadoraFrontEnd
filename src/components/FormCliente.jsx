@@ -24,7 +24,7 @@ const FormCliente =() => {
                         variant="outlined"
                         name = "credito"
                     />
-                    </Stack>
+                </Stack>
                 </Grid>
                 <Grid item xs={12} sm={6} >
                 <Stack spacing={1}>

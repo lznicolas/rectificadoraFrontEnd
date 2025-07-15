@@ -6,7 +6,7 @@ import Footer from "./components/Footer";
 import Repuestos from "./pages/Repuestos";
 import Presentacion from "./pages/Presentacion";
 import FormularioCliente from "./pages/FormularioCliente";
-
+import FormularioEmpleado from "./pages/FormularioEmpleado";
 function App() {
   return (
     <Router>
@@ -21,6 +21,7 @@ function App() {
             <Route path="/repuesto" element={<Repuestos />} />
             <Route path="/home" element={<Presentacion />}/>
             <Route path="/formcliente" element={<FormularioCliente />} />
+            <Route path="/formempleado" element={<FormularioEmpleado />} />
           </Routes>
         </Box>
 
