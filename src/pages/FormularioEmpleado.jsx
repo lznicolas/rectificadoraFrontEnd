@@ -1,20 +1,12 @@
 import React, { useState } from "react";
-import {Container, Typography} from '@mui/material'
+import {Container, Typography,Button} from '@mui/material'
 import FormDireccion from "../components/FormDireccion";
 import FormPersona from "../components/FormPersona";
 import FormEmpleado from "../components/FormEmpleado";
 
-const Empleados = () =>{
-    const [empleado, setEmpleados] = useState([]);
-    const [nuevoEmpleado, setNuevoEmpleado] = useState({
-        apellido:"",
-        nombre:"",
-        dni:"",
-        cuilt:"",
-        telefono:"",
-        
-    })
-}
+
+
+//Nuevo empleado
 
 const FormularioCliente = () =>{
     return(
@@ -27,14 +19,12 @@ const FormularioCliente = () =>{
             </Typography>
             <FormPersona></FormPersona>
             <Typography variant="h5" sx={{color:"black"}}>
-                Direccion
-            </Typography>
-            <FormDireccion></FormDireccion>
-            <Typography variant="h5" sx={{color:"black"}}>
                 Datos del Empleado
             </Typography>
             <FormEmpleado></FormEmpleado>
+            
         </Container>
+        
     )
 
 }

@@ -1,6 +1,7 @@
 import axios from "axios";
 
 const API_URL = "http://localhost:8080/api/repuestos"; 
+const API_URLEmpl = "http://localhost:8080/api/empleado"; 
 
 //Funcion para obtener los repuestos
 export const obtenerRepuestos = async () => {
@@ -50,6 +51,7 @@ export const obtenerStock = async (codigo) => {
   }
 };
 
+//Agregar Repuesto
 export async function agregarRepuesto(repuesto) {
   try{
     console.log("Enviando repuesto",repuesto)
@@ -74,12 +76,24 @@ export async function eliminarRepuesto(id) {
 }
 
 //Agrega empleado
-export async function agregaEmpleado(id){
+export async function agregarEmpleado(empleado){
   try {
-    const response = await axios.post(`${API_URL}/${id}`);
+    const response = await axios.post(`${API_URLEmpl}`,empleado);
     return response.data;
   }catch(error){
     console.error ("Error al intentar agregar un empleado",error);
     throw error;
   }
+}
+
+//Agrega Persona
+export async function agregarPersona(persona) {
+  try {
+    const response = await axios.post(`${API_URLEmpl}`,persona);
+    return response.data;
+  }catch(error){
+    console.log ("Error al tratar de dar de alta una persona", error);
+    throw error;
+  }
+  
 }
