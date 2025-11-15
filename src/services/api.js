@@ -1,7 +1,8 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:8080/api/repuestos"; 
-const API_URLEmpl = "http://localhost:8080/api/empleado"; 
+const API_URL = "http://localhost:8080/api/repuestos";
+const API_URLEmpl = "http://localhost:8080/api/empleados";
+const API_URLCli = "http://localhost:8080/api/clientes";
 
 //Funcion para obtener los repuestos
 export const obtenerRepuestos = async () => {
@@ -14,28 +15,26 @@ export const obtenerRepuestos = async () => {
   }
 };
 
-
 //Actualizar los Repuestos
-export const actualizarRepuesto = async(id,repuesto) =>{
-  try{
-    const response = await axios.put(`${API_URL}/${id}`,repuesto);
+export const actualizarRepuesto = async (id, repuesto) => {
+  try {
+    const response = await axios.put(`${API_URL}/${id}`, repuesto);
     return response.data;
-  }catch(error){
+  } catch (error) {
     console.error("Error actulizando repuesto", error);
     throw error;
   }
-
 };
 
 //Funcion para Actualizar el Stock
-export const actualizarStock = async (codigo,nuevaCantidad)=>{
-  try{
-    const response = await axios.put(`${API_URL}/codigo/${codigo}/stock`,{
-      cantidad : nuevaCantidad,
+export const actualizarStock = async (codigo, nuevaCantidad) => {
+  try {
+    const response = await axios.put(`${API_URL}/codigo/${codigo}/stock`, {
+      cantidad: nuevaCantidad,
     });
     return response.data;
-  }catch (error){
-    console.error("Error al actulizar Stock",error);
+  } catch (error) {
+    console.error("Error al actulizar Stock", error);
     throw error;
   }
 };
@@ -53,47 +52,32 @@ export const obtenerStock = async (codigo) => {
 
 //Agregar Repuesto
 export async function agregarRepuesto(repuesto) {
-  try{
-    console.log("Enviando repuesto",repuesto)
-    const response = await axios.post(`${API_URL}`,repuesto);
+  try {
+    console.log("Enviando repuesto", repuesto);
+    const response = await axios.post(`${API_URL}`, repuesto);
     return response.data;
-  }catch(error){
-    console.error('Error en agregar Repuesto',error);
+  } catch (error) {
+    console.error("Error en agregar Repuesto", error);
     throw error;
   }
-  
 }
 //Elimina un Repuesto
 export async function eliminarRepuesto(id) {
-  try{
+  try {
     const response = await axios.delete(`${API_URL}/${id}`);
     return response.data;
-  }catch (error){
+  } catch (error) {
     console.error("Error eliminando Repuesto", error);
     throw error;
   }
-
 }
 
 //Agrega empleado
-export async function agregarEmpleado(empleado){
-  try {
-    const response = await axios.post(`${API_URLEmpl}`,empleado);
-    return response.data;
-  }catch(error){
-    console.error ("Error al intentar agregar un empleado",error);
-    throw error;
-  }
-}
+export const agregarEmpleado = async (empleado) => {
+  return axios.post(`${API_URLEmpl}`, empleado);
+};
 
 //Agrega Persona
-export async function agregarPersona(persona) {
-  try {
-    const response = await axios.post(`${API_URLEmpl}`,persona);
-    return response.data;
-  }catch(error){
-    console.log ("Error al tratar de dar de alta una persona", error);
-    throw error;
-  }
-  
-}
+export const agregarCliente = async (empleado) => {
+  return axios.post(`${API_URLCli}`, empleado);
+};

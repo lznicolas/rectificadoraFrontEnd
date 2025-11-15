@@ -1,5 +1,14 @@
-import React, { useState } from "react"; 
-import { Box, TextField, Typography, Grid, Stack, Alert, Button } from "@mui/material";
+//Sin funcionalidad - Se debe refactorizar
+import React, { useState } from "react";
+import {
+  Box,
+  TextField,
+  Typography,
+  Grid,
+  Stack,
+  Alert,
+  Button,
+} from "@mui/material";
 import { agregarPersona } from "../services/api";
 const FormPersona = () => {
   const [formData, setFormData] = useState({
@@ -14,8 +23,8 @@ const FormPersona = () => {
       codigoPostal: "",
       dptop: "",
       piso: "",
-      localidad: ""
-    }
+      localidad: "",
+    },
   });
 
   // Guardar nueva persona
