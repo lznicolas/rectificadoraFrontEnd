@@ -16,12 +16,14 @@ const SearchBar=({onSearch})=>{
         <TextField
           label="Buscar"
           variant="outlined"
+          size="small"
           value={searchText}
           onChange={handleSearchTextChange}
+          sx={{ backgroundColor: "white", minWidth: 220 }}
           InputProps={{
             endAdornment: (
               <InputAdornment position="end">
-                <IconButton onClick={handleSearch}>
+                <IconButton color="primary" onClick={handleSearch}>
                   <SearchIcon />
                 </IconButton>
               </InputAdornment>

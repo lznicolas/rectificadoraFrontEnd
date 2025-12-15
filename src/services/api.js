@@ -3,6 +3,9 @@ import axios from "axios";
 const API_URL = "http://localhost:8080/api/repuestos";
 const API_URLEmpl = "http://localhost:8080/api/empleados";
 const API_URLCli = "http://localhost:8080/api/clientes";
+const API_URLTrab = "http://localhost:8080/api/trabajos";
+const API_URLEspec = `${API_URLEmpl}/especialidades`;
+const API_URLLegajoSugerido = `${API_URLEmpl}/legajos/sugerido`;
 
 //Funcion para obtener los repuestos
 export const obtenerRepuestos = async () => {
@@ -81,3 +84,42 @@ export const agregarEmpleado = async (empleado) => {
 export const agregarCliente = async (empleado) => {
   return axios.post(`${API_URLCli}`, empleado);
 };
+
+//Listar
+export const obtenerClientes = async () =>
+  (await axios.get(`${API_URLCli}/all`)).data;
+export const obtenerEmpleados = async () =>
+  (await axios.get(`${API_URLEmpl}/all`)).data;
+
+//Actualizar
+export const actualizarCliente = async (id, cliente) =>
+  (await axios.put(`${API_URLCli}/${id}`, cliente)).data;
+export const actualizarEmpleado = async (id, empleado) =>
+  (await axios.put(`${API_URLEmpl}/${id}`, empleado)).data;
+
+//Eliminar
+export const eliminarCliente = async (id) =>
+  (await axios.delete(`${API_URLCli}/${id}`)).data;
+export const eliminarEmpleado = async (id) =>
+  (await axios.delete(`${API_URLEmpl}/${id}`)).data;
+
+// Especialidades (enum) y legajo sugerido
+export const obtenerEspecialidades = async () =>
+  (await axios.get(API_URLEspec)).data;
+
+export const obtenerLegajoSugerido = async (especialidad) =>
+  (
+    await axios.get(API_URLLegajoSugerido, {
+      params: { especialidad },
+    })
+  ).data;
+
+//Trabajos
+export const obtenerTrabajos = async () =>
+  (await axios.get(`${API_URLTrab}/all`)).data;
+export const crearTrabajo = async (trabajo) =>
+  (await axios.post(`${API_URLTrab}`, trabajo)).data;
+export const actualizarTrabajo = async (id, trabajo) =>
+  (await axios.put(`${API_URLTrab}/${id}`, trabajo)).data;
+export const eliminarTrabajo = async (id) =>
+  (await axios.delete(`${API_URLTrab}/${id}`)).data;

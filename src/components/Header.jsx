@@ -37,9 +37,15 @@ const Header = () => {
   return (
     <AppBar
       position="static"
-      sx={{ backgroundColor: "primary.main", width: "100%" }}
+      elevation={0}
+      sx={{
+        backgroundColor: "transparent",
+        backdropFilter: "blur(8px)",
+        borderBottom: "1px solid rgba(30,58,138,0.15)",
+        boxShadow: "0 10px 30px rgba(17, 24, 39, 0.08)",
+      }}
     >
-      <Toolbar>
+      <Toolbar sx={{ maxWidth: 1280, width: "100%", mx: "auto" }}>
         {/* Botón Hamburguesa (mobile) */}
         <IconButton
           size="large"
@@ -73,25 +79,34 @@ const Header = () => {
             transformOrigin={{ vertical: "top", horizontal: "left" }}
           >
             <MenuItem onClick={() => goTo("/repuesto")}>Repuestos</MenuItem>
-            <MenuItem onClick={() => goTo("/personas")}>Personas</MenuItem>
-            <MenuItem disabled>Trabajos (en construcción)</MenuItem>
+            <MenuItem onClick={() => goTo("/tabpersona")}>Personas</MenuItem>
+            <MenuItem onClick={() => goTo("/trabajos")}>Trabajos</MenuItem>
           </Menu>
           <MenuItem onClick={() => goTo("/tabpersona")}>Contacto</MenuItem>
         </Menu>
 
         {/* Título */}
-        <Typography variant="h6" sx={{ flexGrow: 1, textAlign: "center" }}>
+        <Typography
+          variant="h6"
+          sx={{
+            flexGrow: 1,
+            textAlign: "center",
+            fontWeight: 700,
+            letterSpacing: "0.5px",
+            color: "primary.main",
+          }}
+        >
           Taller Rectificadora MOYANO
         </Typography>
 
         {/* Botones Desktop */}
         <Box sx={{ display: { xs: "none", md: "flex" }, gap: 2 }}>
-          <Button color="inherit" onClick={() => goTo("/home")}>
+          <Button color="primary" variant="text" onClick={() => goTo("/home")}>
             Sobre Nosotros
           </Button>
 
           <Button
-            color="inherit"
+            color="primary"
             endIcon={<ArrowDropDownIcon />}
             onClick={handleSolucionesClick}
           >
@@ -104,7 +119,7 @@ const Header = () => {
           >
             <MenuItem onClick={() => goTo("/repuesto")}>Repuestos</MenuItem>
             <MenuItem onClick={() => goTo("/tabpersona")}>Personas</MenuItem>
-            <MenuItem disabled>Trabajos (en construcción)</MenuItem>
+            <MenuItem onClick={() => goTo("/trabajos")}>Trabajos</MenuItem>
           </Menu>
 
           <Button color="inherit" onClick={() => goTo("/contacto")}>

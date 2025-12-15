@@ -8,6 +8,8 @@ import Presentacion from "./pages/Presentacion";
 import FormularioCliente from "./pages/FormularioCliente";
 import FormularioEmpleado from "./pages/FormularioEmpleado";
 import PersonasTabs from "./pages/PersonasTabs";
+import Trabajos from "./pages/Trabajos";
+import "./App.css";
 function App() {
   return (
     <Router>
@@ -17,20 +19,22 @@ function App() {
           display: "flex",
           flexDirection: "column",
           minHeight: "100vh",
-          width: "100vw",
+          width: "100%",
+          background:
+            "linear-gradient(135deg, rgba(30,58,138,0.08) 0%, rgba(59,130,246,0.08) 35%, rgba(244,246,251,0.9) 100%)",
         }}
       >
-        {/* Header en la parte superior */}
         <Header />
 
-        {/* Contenido principal centrado */}
         <Box
+          className="page-shell"
           sx={{
             flexGrow: 1,
             display: "flex",
             justifyContent: "center",
-            alignItems: "center",
-            padding: 3,
+            alignItems: "flex-start",
+            paddingTop: 4,
+            paddingBottom: 4,
           }}
         >
           <Routes>
@@ -39,6 +43,7 @@ function App() {
             <Route path="/formucliente" element={<FormularioCliente />} />
             <Route path="/formuempleado" element={<FormularioEmpleado />} />
             <Route path="/tabpersona" element={<PersonasTabs />} />
+            <Route path="/trabajos" element={<Trabajos />} />
           </Routes>
         </Box>
 

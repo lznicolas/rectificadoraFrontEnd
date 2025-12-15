@@ -1,32 +1,45 @@
 /* index.css */
 
 :root {
-  --color-principal: #1e3a8a; /* Azul oscuro */
-  --color-secundario: #2563eb; /* Azul claro */
-  --color-fondo: #f8fafc; /* Fondo general */
-  --color-texto: #1f2937; /* Gris oscuro */
-  --color-footer: #111827;
+  --color-azul-oscuro: #1e3a8a;
+  --color-azul-claro: #3b82f6;
+  --color-gris: #6b7280;
+  --color-fondo: #f4f6fb;
+  --color-texto: #0f172a;
+  --color-borde: #e2e8f0;
 
-  --font-principal: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  --font-titulo: 'Montserrat', sans-serif;
+  --font-principal: "Inter", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  --font-titulo: "Poppins", "Inter", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
   padding: 0;
-  background-color: var(--color-fondo);
+  min-height: 100vh;
+  background: radial-gradient(circle at 20% 20%, #e8eefc 0, #f4f6fb 35%, #f4f6fb 100%);
   color: var(--color-texto);
   font-family: var(--font-principal);
 }
 
-h1, h2, h3 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-titulo);
-  color: var(--color-principal);
+  color: var(--color-azul-oscuro);
+  letter-spacing: -0.01em;
 }
 
 a {
-  color: var(--color-secundario);
+  color: var(--color-azul-claro);
   text-decoration: none;
+  font-weight: 600;
 }
 
 a:hover {
