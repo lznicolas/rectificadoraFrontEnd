@@ -21,10 +21,12 @@ import {
   TableRow,
   TextField,
   Typography,
+  Chip,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import CloseIcon from "@mui/icons-material/Close";
 import {
   obtenerTrabajos,
   crearTrabajo,
@@ -32,6 +34,7 @@ import {
   eliminarTrabajo,
   obtenerClientes,
   obtenerEmpleados,
+  obtenerRepuestos,
 } from "../services/api";
 
 const tipoOptions = [
@@ -44,6 +47,7 @@ const Trabajos = () => {
   const [trabajos, setTrabajos] = useState([]);
   const [clientes, setClientes] = useState([]);
   const [empleados, setEmpleados] = useState([]);
+  const [repuestos, setRepuestos] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({
@@ -53,18 +57,25 @@ const Trabajos = () => {
     detalles: "",
     clienteId: "",
     empleadoId: "",
+    repuestos: [],
+  });
+  const [repuestoDraft, setRepuestoDraft] = useState({
+    repuestoId: "",
+    cantidadUsada: "",
   });
 
   const cargarDatos = async () => {
     try {
-      const [trabajosRes, clientesRes, empleadosRes] = await Promise.all([
+      const [trabajosRes, clientesRes, empleadosRes, repuestosRes] = await Promise.all([
         obtenerTrabajos(),
         obtenerClientes(),
         obtenerEmpleados(),
+        obtenerRepuestos(),
       ]);
       setTrabajos(trabajosRes || []);
       setClientes(clientesRes || []);
       setEmpleados(empleadosRes || []);
+      setRepuestos(repuestosRes || []);
     } catch (err) {
       console.error("Error cargando datos de trabajos:", err);
     }
@@ -84,6 +95,11 @@ const Trabajos = () => {
         detalles: trabajo.detalles || "",
         clienteId: trabajo.clientes?.[0]?.clienteId || "",
         empleadoId: trabajo.empleados?.[0]?.empleadoId || "",
+        repuestos:
+          trabajo.repuestos?.map((r) => ({
+            repuestoId: r.repuestoId || r.id,
+            cantidadUsada: r.cantidadUsada || "",
+          })) || [],
       });
     } else {
       setEditingId(null);
@@ -94,8 +110,10 @@ const Trabajos = () => {
         detalles: "",
         clienteId: "",
         empleadoId: "",
+        repuestos: [],
       });
     }
+    setRepuestoDraft({ repuestoId: "", cantidadUsada: "" });
     setModalOpen(true);
   };
 
@@ -109,6 +127,45 @@ const Trabajos = () => {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleRepuestoDraftChange = (e) => {
+    const { name, value } = e.target;
+    setRepuestoDraft((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleAddRepuesto = () => {
+    if (!repuestoDraft.repuestoId || !repuestoDraft.cantidadUsada) return;
+    setForm((prev) => {
+      const cantidad = Number(repuestoDraft.cantidadUsada);
+      const idx = prev.repuestos.findIndex(
+        (r) => String(r.repuestoId) === String(repuestoDraft.repuestoId)
+      );
+      if (idx >= 0) {
+        const nuevos = [...prev.repuestos];
+        const actual = nuevos[idx];
+        nuevos[idx] = {
+          ...actual,
+          cantidadUsada: Number(actual.cantidadUsada || 0) + cantidad,
+        };
+        return { ...prev, repuestos: nuevos };
+      }
+      return {
+        ...prev,
+        repuestos: [
+          ...prev.repuestos,
+          { repuestoId: repuestoDraft.repuestoId, cantidadUsada: cantidad },
+        ],
+      };
+    });
+    setRepuestoDraft({ repuestoId: "", cantidadUsada: "" });
+  };
+
+  const handleRemoveRepuesto = (index) => {
+    setForm((prev) => ({
+      ...prev,
+      repuestos: prev.repuestos.filter((_, i) => i !== index),
+    }));
+  };
+
   const handleSave = async () => {
     const payload = {
       tipoTrabajo: form.tipoTrabajo,
@@ -117,7 +174,7 @@ const Trabajos = () => {
       detalles: form.detalles,
       empleados: form.empleadoId ? [{ empleadoId: form.empleadoId }] : [],
       clientes: form.clienteId ? [{ clienteId: form.clienteId }] : [],
-      repuestos: [],
+      repuestos: form.repuestos || [],
     };
     try {
       if (editingId) {
@@ -161,6 +218,13 @@ const Trabajos = () => {
       }, {}),
     [empleados]
   );
+  const repuestosById = useMemo(() => {
+    const lista = Array.isArray(repuestos) ? repuestos : [];
+    return lista.reduce((acc, r) => {
+      acc[r.id] = r;
+      return acc;
+    }, {});
+  }, [repuestos]);
 
   return (
     <Container sx={{ py: 2 }}>
@@ -208,6 +272,7 @@ const Trabajos = () => {
                 <TableCell><b>Cliente</b></TableCell>
                 <TableCell><b>Responsable</b></TableCell>
                 <TableCell><b>Diagnóstico</b></TableCell>
+                <TableCell><b>Repuestos</b></TableCell>
                 <TableCell><b>Acciones</b></TableCell>
               </TableRow>
             </TableHead>
@@ -221,6 +286,16 @@ const Trabajos = () => {
                 const empleadoNombre = empleadoId
                   ? `${empleadosById[empleadoId]?.nombre || ""} ${empleadosById[empleadoId]?.apellido || ""}`
                   : "-";
+                const repuestoResumen =
+                  t.repuestos && Array.isArray(t.repuestos) && t.repuestos.length
+                    ? t.repuestos
+                        .map((r) => {
+                          const rep = repuestosById[r.repuestoId];
+                          const nombre = rep?.titulo || rep?.codigoDeProducto || "Repuesto";
+                          return `${nombre} x${r.cantidadUsada ?? "-"}`;
+                        })
+                        .join(", ")
+                    : "-";
                 return (
                   <TableRow key={t.id} hover>
                     <TableCell>{t.id}</TableCell>
@@ -228,6 +303,11 @@ const Trabajos = () => {
                     <TableCell>{clienteNombre}</TableCell>
                     <TableCell>{empleadoNombre}</TableCell>
                     <TableCell>{t.diagnostico}</TableCell>
+                    <TableCell sx={{ maxWidth: 200 }}>
+                      <Typography variant="body2" noWrap title={repuestoResumen}>
+                        {repuestoResumen}
+                      </Typography>
+                    </TableCell>
                     <TableCell>
                       <Stack direction="row" spacing={1}>
                         <Button
@@ -330,6 +410,58 @@ const Trabajos = () => {
               value={form.detalles}
               onChange={handleChange}
             />
+            <Typography variant="subtitle2" sx={{ mt: 1 }}>
+              Repuestos
+            </Typography>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+              <FormControl fullWidth>
+                <InputLabel>Repuesto</InputLabel>
+                <Select
+                  label="Repuesto"
+                  name="repuestoId"
+                  value={repuestoDraft.repuestoId}
+                  onChange={handleRepuestoDraftChange}
+                >
+                  {(Array.isArray(repuestos) ? repuestos : []).map((r) => (
+                    <MenuItem key={r.id} value={r.id}>
+                      {r.titulo} ({r.codigoDeProducto || "s/c"})
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <TextField
+                label="Cantidad"
+                name="cantidadUsada"
+                value={repuestoDraft.cantidadUsada}
+                onChange={handleRepuestoDraftChange}
+                type="number"
+                inputProps={{ min: 1 }}
+                sx={{ minWidth: 140 }}
+              />
+              <Button variant="outlined" onClick={handleAddRepuesto}>
+                Agregar repuesto
+              </Button>
+            </Stack>
+            <Stack direction="row" spacing={1} flexWrap="wrap">
+              {(form.repuestos || []).map((r, idx) => {
+                const rep = repuestosById[r.repuestoId];
+                const label = `${rep?.titulo || "Repuesto"} x${r.cantidadUsada}`;
+                return (
+                  <Chip
+                    key={`${r.repuestoId}-${idx}`}
+                    label={label}
+                    onDelete={() => handleRemoveRepuesto(idx)}
+                    deleteIcon={<CloseIcon />}
+                    sx={{ mb: 1 }}
+                  />
+                );
+              })}
+              {(!form.repuestos || form.repuestos.length === 0) && (
+                <Typography variant="body2" color="text.secondary">
+                  No hay repuestos cargados.
+                </Typography>
+              )}
+            </Stack>
           </Stack>
         </DialogContent>
         <DialogActions>
