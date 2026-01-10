@@ -53,7 +53,7 @@ const Presentacion = () => {
           </Typography>
           <Typography variant="body1" sx={{ color: "text.secondary" }}>
             Acompañamos a talleres, flotas y particulares con diagnósticos
-            claros, repuestos controlados y seguimiento de cada trabajo.
+            claros, articulos controlados y seguimiento de cada trabajo.
           </Typography>
         </Stack>
 

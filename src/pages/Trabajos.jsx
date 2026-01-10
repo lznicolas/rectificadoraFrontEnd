@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Button,
@@ -13,6 +14,8 @@ import {
   Paper,
   Select,
   Stack,
+  Tabs,
+  Tab,
   Table,
   TableBody,
   TableCell,
@@ -27,6 +30,7 @@ import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CloseIcon from "@mui/icons-material/Close";
+import DescriptionIcon from "@mui/icons-material/Description";
 import {
   obtenerTrabajos,
   crearTrabajo,
@@ -34,48 +38,64 @@ import {
   eliminarTrabajo,
   obtenerClientes,
   obtenerEmpleados,
-  obtenerRepuestos,
+  obtenerArticulos,
+  obtenerTrabajosPorCliente,
 } from "../services/api";
 
 const tipoOptions = [
-  { value: "RECTIFICAION", label: "Rectificación" },
-  { value: "CAMBIO_REPUESTO", label: "Cambio de repuesto" },
+  { value: "RECTIFICACION", label: "Rectificación" },
+  { value: "CAMBIO_REPUESTO", label: "Cambio de articulo" },
   { value: "MANTENIMIENTO", label: "Mantenimiento" },
 ];
 
+const estadoOptions = [
+  { value: "PENDIENTE", label: "Pendiente" },
+  { value: "EN_PROGRESO", label: "En progreso" },
+  { value: "TERMINADO", label: "Terminado" },
+];
+
 const Trabajos = () => {
+  const navigate = useNavigate();
   const [trabajos, setTrabajos] = useState([]);
   const [clientes, setClientes] = useState([]);
   const [empleados, setEmpleados] = useState([]);
-  const [repuestos, setRepuestos] = useState([]);
+  const [articulos, setArticulos] = useState([]);
+  const [trabajosCliente, setTrabajosCliente] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [statusFilter, setStatusFilter] = useState("TODOS");
+  const [searchTerm, setSearchTerm] = useState("");
   const [form, setForm] = useState({
+    codigoPublico: null,
     tipoTrabajo: "",
+    estado: "PENDIENTE",
     diagnostico: "",
     tareasRealizar: "",
     detalles: "",
+    costoManoDeObra: "",
     clienteId: "",
     empleadoId: "",
-    repuestos: [],
+    articulos: [],
+    trabajoAnteriorId: null,
   });
-  const [repuestoDraft, setRepuestoDraft] = useState({
-    repuestoId: "",
+  const [articuloDraft, setArticuloDraft] = useState({
+    articuloId: "",
     cantidadUsada: "",
   });
+  const [relacionModalOpen, setRelacionModalOpen] = useState(false);
 
   const cargarDatos = async () => {
     try {
-      const [trabajosRes, clientesRes, empleadosRes, repuestosRes] = await Promise.all([
+      const [trabajosRes, clientesRes, empleadosRes, articulosRes] = await Promise.all([
         obtenerTrabajos(),
         obtenerClientes(),
         obtenerEmpleados(),
-        obtenerRepuestos(),
+        obtenerArticulos(),
       ]);
       setTrabajos(trabajosRes || []);
       setClientes(clientesRes || []);
       setEmpleados(empleadosRes || []);
-      setRepuestos(repuestosRes || []);
+      setArticulos(articulosRes || []);
     } catch (err) {
       console.error("Error cargando datos de trabajos:", err);
     }
@@ -89,31 +109,40 @@ const Trabajos = () => {
     if (trabajo) {
       setEditingId(trabajo.id);
       setForm({
+        codigoPublico: trabajo.codigoPublico || null,
         tipoTrabajo: trabajo.tipoTrabajo || "",
+        estado: trabajo.estado || "PENDIENTE",
         diagnostico: trabajo.diagnostico || "",
         tareasRealizar: trabajo.tareasRealizar || "",
         detalles: trabajo.detalles || "",
+        costoManoDeObra: trabajo.costoManoDeObra ?? "",
         clienteId: trabajo.clientes?.[0]?.clienteId || "",
         empleadoId: trabajo.empleados?.[0]?.empleadoId || "",
-        repuestos:
-          trabajo.repuestos?.map((r) => ({
-            repuestoId: r.repuestoId || r.id,
-            cantidadUsada: r.cantidadUsada || "",
+        trabajoAnteriorId: trabajo.trabajoAnteriorId || null,
+        articulos:
+          trabajo.articulos?.map((a) => ({
+            articuloId: a.articuloId || a.id,
+            cantidadUsada: a.cantidadUsada || "",
           })) || [],
       });
     } else {
       setEditingId(null);
       setForm({
+        codigoPublico: null,
         tipoTrabajo: "",
+        estado: "PENDIENTE",
         diagnostico: "",
         tareasRealizar: "",
         detalles: "",
+        costoManoDeObra: "",
         clienteId: "",
         empleadoId: "",
-        repuestos: [],
+        articulos: [],
+        trabajoAnteriorId: null,
       });
     }
-    setRepuestoDraft({ repuestoId: "", cantidadUsada: "" });
+    setArticuloDraft({ articuloId: "", cantidadUsada: "" });
+    setTrabajosCliente([]);
     setModalOpen(true);
   };
 
@@ -127,54 +156,96 @@ const Trabajos = () => {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleRepuestoDraftChange = (e) => {
+  const handleArticuloDraftChange = (e) => {
     const { name, value } = e.target;
-    setRepuestoDraft((prev) => ({ ...prev, [name]: value }));
+    setArticuloDraft((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleAddRepuesto = () => {
-    if (!repuestoDraft.repuestoId || !repuestoDraft.cantidadUsada) return;
+  const handleAddArticulo = () => {
+    if (!articuloDraft.articuloId || !articuloDraft.cantidadUsada) return;
     setForm((prev) => {
-      const cantidad = Number(repuestoDraft.cantidadUsada);
-      const idx = prev.repuestos.findIndex(
-        (r) => String(r.repuestoId) === String(repuestoDraft.repuestoId)
+      const cantidad = Number(articuloDraft.cantidadUsada);
+      const idx = prev.articulos.findIndex(
+        (a) => String(a.articuloId) === String(articuloDraft.articuloId)
       );
       if (idx >= 0) {
-        const nuevos = [...prev.repuestos];
+        const nuevos = [...prev.articulos];
         const actual = nuevos[idx];
         nuevos[idx] = {
           ...actual,
           cantidadUsada: Number(actual.cantidadUsada || 0) + cantidad,
         };
-        return { ...prev, repuestos: nuevos };
+        return { ...prev, articulos: nuevos };
       }
       return {
         ...prev,
-        repuestos: [
-          ...prev.repuestos,
-          { repuestoId: repuestoDraft.repuestoId, cantidadUsada: cantidad },
+        articulos: [
+          ...prev.articulos,
+          { articuloId: articuloDraft.articuloId, cantidadUsada: cantidad },
         ],
       };
     });
-    setRepuestoDraft({ repuestoId: "", cantidadUsada: "" });
+    setArticuloDraft({ articuloId: "", cantidadUsada: "" });
   };
 
-  const handleRemoveRepuesto = (index) => {
+  const handleRemoveArticulo = (index) => {
     setForm((prev) => ({
       ...prev,
-      repuestos: prev.repuestos.filter((_, i) => i !== index),
+      articulos: prev.articulos.filter((_, i) => i !== index),
     }));
   };
 
+  const cargarTrabajosCliente = async () => {
+    if (!form.clienteId) return;
+    try {
+      const data = await obtenerTrabajosPorCliente(form.clienteId);
+      const terminados = Array.isArray(data)
+        ? data.filter((t) => t.estado === "TERMINADO")
+        : [];
+      setTrabajosCliente(terminados);
+      setRelacionModalOpen(true);
+    } catch (err) {
+      console.error("Error obteniendo trabajos del cliente", err);
+      alert("No se pudieron cargar los trabajos del cliente.");
+    }
+  };
+
+  const seleccionarTrabajoAnterior = (trabajo) => {
+    setForm((prev) => ({
+      ...prev,
+      trabajoAnteriorId: trabajo?.id || null,
+    }));
+    setRelacionModalOpen(false);
+  };
+
+  const limpiarTrabajoAnterior = () => {
+    setForm((prev) => ({ ...prev, trabajoAnteriorId: null }));
+  };
+
   const handleSave = async () => {
+    if (!form.tipoTrabajo) {
+      alert("Selecciona el tipo de trabajo.");
+      return;
+    }
+    if (!form.clienteId) {
+      alert("Selecciona un cliente para el trabajo.");
+      return;
+    }
+    if (!form.empleadoId) {
+      alert("Selecciona un responsable/empleado para el trabajo.");
+      return;
+    }
     const payload = {
       tipoTrabajo: form.tipoTrabajo,
+      estado: form.estado,
       diagnostico: form.diagnostico,
       tareasRealizar: form.tareasRealizar,
       detalles: form.detalles,
+      costoManoDeObra: form.costoManoDeObra === "" ? null : form.costoManoDeObra,
       empleados: form.empleadoId ? [{ empleadoId: form.empleadoId }] : [],
       clientes: form.clienteId ? [{ clienteId: form.clienteId }] : [],
-      repuestos: form.repuestos || [],
+      articulos: form.articulos || [],
+      trabajoAnteriorId: form.trabajoAnteriorId,
     };
     try {
       if (editingId) {
@@ -218,13 +289,42 @@ const Trabajos = () => {
       }, {}),
     [empleados]
   );
-  const repuestosById = useMemo(() => {
-    const lista = Array.isArray(repuestos) ? repuestos : [];
+  const articulosById = useMemo(() => {
+    const lista = Array.isArray(articulos) ? articulos : [];
     return lista.reduce((acc, r) => {
       acc[r.id] = r;
       return acc;
     }, {});
-  }, [repuestos]);
+  }, [articulos]);
+
+  const trabajosFiltrados = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    return trabajos.filter((t) => {
+      const estadoOk =
+        statusFilter === "TODOS" ||
+        (t.estado || "").toUpperCase() === statusFilter;
+
+      if (!estadoOk) return false;
+
+      if (!term) return true;
+
+      const clienteId = t.clientes?.[0]?.clienteId;
+      const empleadoId = t.empleados?.[0]?.empleadoId;
+      const clienteNombre = clienteId
+        ? `${clientesById[clienteId]?.nombre || ""} ${clientesById[clienteId]?.apellido || ""}`
+        : "";
+      const empleadoNombre = empleadoId
+        ? `${empleadosById[empleadoId]?.nombre || ""} ${empleadosById[empleadoId]?.apellido || ""}`
+        : "";
+
+      const nro = t.codigoPublico ? String(t.codigoPublico) : "";
+      return (
+        nro.toLowerCase().includes(term) ||
+        clienteNombre.toLowerCase().includes(term) ||
+        empleadoNombre.toLowerCase().includes(term)
+      );
+    });
+  }, [trabajos, statusFilter, searchTerm, clientesById, empleadosById]);
 
   return (
     <Container sx={{ py: 2 }}>
@@ -263,21 +363,43 @@ const Trabajos = () => {
           </Button>
         </Stack>
 
+        <Stack spacing={2} sx={{ mb: 2 }}>
+          <Tabs
+            value={statusFilter}
+            onChange={(_, value) => setStatusFilter(value)}
+            variant="scrollable"
+            scrollButtons="auto"
+          >
+            <Tab label="Todos" value="TODOS" />
+            <Tab label="Pendientes" value="PENDIENTE" />
+            <Tab label="En progreso" value="EN_PROGRESO" />
+            <Tab label="Finalizados" value="TERMINADO" />
+          </Tabs>
+          <TextField
+            placeholder="Buscar por nro, cliente o responsable"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            size="small"
+            fullWidth
+          />
+        </Stack>
+
         <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 3, border: "1px solid rgba(30,58,138,0.12)" }}>
           <Table>
             <TableHead>
               <TableRow sx={{ backgroundColor: "rgba(30,58,138,0.08)" }}>
-                <TableCell><b>ID</b></TableCell>
+                <TableCell><b>Nro</b></TableCell>
                 <TableCell><b>Tipo</b></TableCell>
+                <TableCell><b>Estado</b></TableCell>
                 <TableCell><b>Cliente</b></TableCell>
                 <TableCell><b>Responsable</b></TableCell>
                 <TableCell><b>Diagnóstico</b></TableCell>
-                <TableCell><b>Repuestos</b></TableCell>
+                <TableCell><b>Articulos</b></TableCell>
                 <TableCell><b>Acciones</b></TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {trabajos.map((t) => {
+              {trabajosFiltrados.map((t) => {
                 const clienteId = t.clientes?.[0]?.clienteId;
                 const empleadoId = t.empleados?.[0]?.empleadoId;
                 const clienteNombre = clienteId
@@ -286,26 +408,28 @@ const Trabajos = () => {
                 const empleadoNombre = empleadoId
                   ? `${empleadosById[empleadoId]?.nombre || ""} ${empleadosById[empleadoId]?.apellido || ""}`
                   : "-";
-                const repuestoResumen =
-                  t.repuestos && Array.isArray(t.repuestos) && t.repuestos.length
-                    ? t.repuestos
+                const articuloResumen =
+                  t.articulos && Array.isArray(t.articulos) && t.articulos.length
+                    ? t.articulos
                         .map((r) => {
-                          const rep = repuestosById[r.repuestoId];
-                          const nombre = rep?.titulo || rep?.codigoDeProducto || "Repuesto";
-                          return `${nombre} x${r.cantidadUsada ?? "-"}`;
+                          const rep = articulosById[r.articuloId];
+                          const nombre = rep?.titulo || rep?.codigoDeProducto || "Articulo";
+                          const precio = rep?.precioUnitario != null ? ` $${Number(rep.precioUnitario).toFixed(2)}` : "";
+                          return `${nombre} x${r.cantidadUsada ?? "-"}${precio ? ` (${precio})` : ""}`;
                         })
                         .join(", ")
                     : "-";
                 return (
                   <TableRow key={t.id} hover>
-                    <TableCell>{t.id}</TableCell>
+                    <TableCell>{t.codigoPublico || "—"}</TableCell>
                     <TableCell>{t.tipoTrabajo}</TableCell>
+                    <TableCell>{t.estado || "-"}</TableCell>
                     <TableCell>{clienteNombre}</TableCell>
                     <TableCell>{empleadoNombre}</TableCell>
                     <TableCell>{t.diagnostico}</TableCell>
                     <TableCell sx={{ maxWidth: 200 }}>
-                      <Typography variant="body2" noWrap title={repuestoResumen}>
-                        {repuestoResumen}
+                      <Typography variant="body2" noWrap title={articuloResumen}>
+                        {articuloResumen}
                       </Typography>
                     </TableCell>
                     <TableCell>
@@ -316,6 +440,13 @@ const Trabajos = () => {
                           onClick={() => handleOpen(t)}
                         >
                           Editar
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          startIcon={<DescriptionIcon />}
+                          onClick={() => navigate(`/trabajos/${t.id}/reporte`)}
+                        >
+                          Informe
                         </Button>
                         <Button
                           variant="outlined"
@@ -341,6 +472,15 @@ const Trabajos = () => {
         </DialogTitle>
         <DialogContent dividers>
           <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField
+              label="Nro público"
+              value={
+                form.codigoPublico
+                  ? form.codigoPublico
+                  : "Se asignará automáticamente"
+              }
+              InputProps={{ readOnly: true }}
+            />
             <FormControl fullWidth>
               <InputLabel>Tipo de trabajo</InputLabel>
               <Select
@@ -357,12 +497,28 @@ const Trabajos = () => {
               </Select>
             </FormControl>
             <FormControl fullWidth>
+              <InputLabel>Estado</InputLabel>
+              <Select
+                name="estado"
+                label="Estado"
+                value={form.estado}
+                onChange={handleChange}
+              >
+                {estadoOptions.map((opt) => (
+                  <MenuItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl fullWidth>
               <InputLabel>Cliente</InputLabel>
               <Select
                 name="clienteId"
                 label="Cliente"
                 value={form.clienteId}
                 onChange={handleChange}
+                disabled={Boolean(editingId)}
               >
                 {clientes.map((c) => (
                   <MenuItem key={c.id} value={c.id}>
@@ -371,6 +527,23 @@ const Trabajos = () => {
                 ))}
               </Select>
             </FormControl>
+            {!editingId && form.clienteId && (
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Button variant="outlined" onClick={cargarTrabajosCliente}>
+                  + Vincular trabajo anterior (estado TERMINADO)
+                </Button>
+                {form.trabajoAnteriorId && (
+                  <Button color="secondary" onClick={limpiarTrabajoAnterior}>
+                    Quitar vínculo
+                  </Button>
+                )}
+              </Stack>
+            )}
+            {form.trabajoAnteriorId && (
+              <Typography variant="body2" color="text.secondary">
+                Trabajo anterior seleccionado: {form.trabajoAnteriorId}
+              </Typography>
+            )}
             <FormControl fullWidth>
               <InputLabel>Responsable</InputLabel>
               <Select
@@ -410,21 +583,29 @@ const Trabajos = () => {
               value={form.detalles}
               onChange={handleChange}
             />
+            <TextField
+              name="costoManoDeObra"
+              label="Costo mano de obra"
+              type="number"
+              inputProps={{ min: 0, step: "0.01" }}
+              value={form.costoManoDeObra}
+              onChange={handleChange}
+            />
             <Typography variant="subtitle2" sx={{ mt: 1 }}>
-              Repuestos
+              Articulos
             </Typography>
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
               <FormControl fullWidth>
-                <InputLabel>Repuesto</InputLabel>
+                <InputLabel>Articulo</InputLabel>
                 <Select
-                  label="Repuesto"
-                  name="repuestoId"
-                  value={repuestoDraft.repuestoId}
-                  onChange={handleRepuestoDraftChange}
+                  label="Articulo"
+                  name="articuloId"
+                  value={articuloDraft.articuloId}
+                  onChange={handleArticuloDraftChange}
                 >
-                  {(Array.isArray(repuestos) ? repuestos : []).map((r) => (
+                  {(Array.isArray(articulos) ? articulos : []).map((r) => (
                     <MenuItem key={r.id} value={r.id}>
-                      {r.titulo} ({r.codigoDeProducto || "s/c"})
+                      {r.titulo} ({r.codigoDeProducto || "s/c"}) {r.precioUnitario != null ? `- $${Number(r.precioUnitario).toFixed(2)}` : ""}
                     </MenuItem>
                   ))}
                 </Select>
@@ -432,33 +613,34 @@ const Trabajos = () => {
               <TextField
                 label="Cantidad"
                 name="cantidadUsada"
-                value={repuestoDraft.cantidadUsada}
-                onChange={handleRepuestoDraftChange}
+                value={articuloDraft.cantidadUsada}
+                onChange={handleArticuloDraftChange}
                 type="number"
                 inputProps={{ min: 1 }}
                 sx={{ minWidth: 140 }}
               />
-              <Button variant="outlined" onClick={handleAddRepuesto}>
-                Agregar repuesto
+              <Button variant="outlined" onClick={handleAddArticulo}>
+                Agregar articulo
               </Button>
             </Stack>
             <Stack direction="row" spacing={1} flexWrap="wrap">
-              {(form.repuestos || []).map((r, idx) => {
-                const rep = repuestosById[r.repuestoId];
-                const label = `${rep?.titulo || "Repuesto"} x${r.cantidadUsada}`;
+              {(form.articulos || []).map((r, idx) => {
+                const rep = articulosById[r.articuloId];
+                const precio = rep?.precioUnitario != null ? ` - $${Number(rep.precioUnitario).toFixed(2)}` : "";
+                const label = `${rep?.titulo || "Articulo"} x${r.cantidadUsada}${precio}`;
                 return (
                   <Chip
-                    key={`${r.repuestoId}-${idx}`}
+                    key={`${r.articuloId}-${idx}`}
                     label={label}
-                    onDelete={() => handleRemoveRepuesto(idx)}
+                    onDelete={() => handleRemoveArticulo(idx)}
                     deleteIcon={<CloseIcon />}
                     sx={{ mb: 1 }}
                   />
                 );
               })}
-              {(!form.repuestos || form.repuestos.length === 0) && (
+              {(!form.articulos || form.articulos.length === 0) && (
                 <Typography variant="body2" color="text.secondary">
-                  No hay repuestos cargados.
+                  No hay articulos cargados.
                 </Typography>
               )}
             </Stack>
@@ -469,6 +651,54 @@ const Trabajos = () => {
           <Button variant="contained" onClick={handleSave}>
             Guardar
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={relacionModalOpen}
+        onClose={() => setRelacionModalOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Seleccionar trabajo anterior (TERMINADO)</DialogTitle>
+        <DialogContent dividers>
+          {trabajosCliente.length === 0 ? (
+            <Typography variant="body2">
+              No hay trabajos TERMINADO para este cliente.
+            </Typography>
+          ) : (
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Nro</TableCell>
+                  <TableCell>Diagnóstico</TableCell>
+                  <TableCell>Estado</TableCell>
+                  <TableCell></TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {trabajosCliente.map((t) => (
+                  <TableRow key={t.id} hover>
+                    <TableCell>{t.codigoPublico || t.id}</TableCell>
+                    <TableCell>{t.diagnostico || "-"}</TableCell>
+                    <TableCell>{t.estado}</TableCell>
+                    <TableCell>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => seleccionarTrabajoAnterior(t)}
+                      >
+                        Vincular
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRelacionModalOpen(false)}>Cerrar</Button>
         </DialogActions>
       </Dialog>
     </Container>

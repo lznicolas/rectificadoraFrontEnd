@@ -42,6 +42,16 @@ const PersonasTabs = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [editType, setEditType] = useState(null);
   const [editData, setEditData] = useState(null);
+  const [editErrors, setEditErrors] = useState({
+    nombre: "",
+    apellido: "",
+    dni: "",
+    telefono: "",
+    legajo: "",
+    especialidad: "",
+  });
+  const [editMissingFields, setEditMissingFields] = useState([]);
+  const [editSubmitAttempted, setEditSubmitAttempted] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [addType, setAddType] = useState(null);
   const [deleteDialog, setDeleteDialog] = useState({
@@ -99,26 +109,173 @@ const PersonasTabs = () => {
   const handleEdit = (tipo, data) => {
     setEditType(tipo);
     setEditData(data);
+    setEditErrors({
+      nombre: "",
+      apellido: "",
+      dni: "",
+      telefono: "",
+      legajo: "",
+      especialidad: "",
+    });
+    setEditMissingFields([]);
+    setEditSubmitAttempted(false);
     setEditOpen(true);
+  };
+
+  const sanitizeLetters = (text) =>
+    String(text ?? "").replace(/[^a-zA-ZÁÉÍÓÚáéíóúñÑüÜ\s]/g, "");
+  const sanitizeNumbers = (text) => String(text ?? "").replace(/[^0-9]/g, "");
+  const normalizeDni = (value) => {
+    const clean = sanitizeNumbers(value);
+    if (!clean) return "";
+    if (clean.length > 8) return clean;
+    return clean.padStart(8, "0");
   };
 
   const handleEditChange = (e) => {
     const { name, value } = e.target;
+    if (editType === "cliente" && (name === "nombre" || name === "apellido")) {
+      const sanitized = sanitizeLetters(value);
+      const hasInvalid = value !== sanitized;
+      setEditData((prev) => ({ ...prev, [name]: sanitized }));
+      setEditErrors((prev) => ({
+        ...prev,
+        [name]: hasInvalid ? `El ${name} no puede contener numeros.` : "",
+      }));
+      return;
+    }
+
+    if (editType === "cliente" && name === "dni") {
+      const cleanDni = sanitizeNumbers(value);
+      const hasInvalid = value !== cleanDni;
+      const tooLong = cleanDni.length > 8;
+      setEditData((prev) => ({ ...prev, dni: cleanDni }));
+      setEditErrors((prev) => ({
+        ...prev,
+        dni: tooLong
+          ? "El dni no puede ser mayor a 8 digitos"
+          : hasInvalid
+          ? "El dni solo puede tener numeros"
+          : "",
+      }));
+      return;
+    }
+
+    if (editType === "cliente" && name === "telefono") {
+      const cleanPhone = sanitizeNumbers(value);
+      const hasInvalid = value !== cleanPhone;
+      setEditData((prev) => ({ ...prev, telefono: cleanPhone }));
+      setEditErrors((prev) => ({
+        ...prev,
+        telefono: hasInvalid ? "El telefono solo puede tener numeros." : "",
+      }));
+      return;
+    }
+
+    if (editType === "empleado" && (name === "nombre" || name === "apellido")) {
+      const sanitized = sanitizeLetters(value);
+      const hasInvalid = value !== sanitized;
+      setEditData((prev) => ({ ...prev, [name]: sanitized }));
+      setEditErrors((prev) => ({
+        ...prev,
+        [name]: hasInvalid ? `El ${name} no puede contener numeros.` : "",
+      }));
+      return;
+    }
+
+    if (editType === "empleado" && name === "dni") {
+      const cleanDni = sanitizeNumbers(value);
+      const hasInvalid = value !== cleanDni;
+      const tooLong = cleanDni.length > 8;
+      setEditData((prev) => ({ ...prev, dni: cleanDni }));
+      setEditErrors((prev) => ({
+        ...prev,
+        dni: tooLong
+          ? "El dni no puede ser mayor a 8 digitos"
+          : hasInvalid
+          ? "El dni solo puede tener numeros"
+          : "",
+      }));
+      return;
+    }
+
+    if (editType === "empleado" && name === "telefono") {
+      const cleanPhone = sanitizeNumbers(value);
+      const hasInvalid = value !== cleanPhone;
+      setEditData((prev) => ({ ...prev, telefono: cleanPhone }));
+      setEditErrors((prev) => ({
+        ...prev,
+        telefono: hasInvalid ? "El telefono solo puede tener numeros." : "",
+      }));
+      return;
+    }
+
+    if (editType === "empleado" && name === "legajo") {
+      const cleanLegajo = sanitizeNumbers(value);
+      const hasInvalid = value !== cleanLegajo;
+      setEditData((prev) => ({ ...prev, legajo: cleanLegajo }));
+      setEditErrors((prev) => ({
+        ...prev,
+        legajo: hasInvalid ? "El legajo solo puede tener numeros." : "",
+      }));
+      return;
+    }
+
     setEditData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleEditDniBlur = () => {
+    if (!editData?.dni) return;
+    const normalized = normalizeDni(editData.dni);
+    if (normalized === editData.dni) return;
+    setEditData((prev) => ({ ...prev, dni: normalized }));
   };
 
   const handleEditSave = async () => {
     if (!editData) return;
+    let payload = editData;
+    if (editType === "cliente") {
+      setEditSubmitAttempted(true);
+      const required = ["nombre", "apellido", "dni", "tipoCliente"];
+      const missing = required.filter((field) => !editData[field]);
+      setEditMissingFields(missing);
+      if (missing.length > 0) return;
+      if (editErrors.nombre || editErrors.apellido || editErrors.dni || editErrors.telefono) return;
+      if (editData.dni && editData.dni.length > 8) return;
+      payload = { ...editData, dni: normalizeDni(editData.dni) };
+    }
+    if (editType === "empleado") {
+      setEditSubmitAttempted(true);
+      const required = ["nombre", "apellido", "dni", "especialidad", "legajo"];
+      const missing = required.filter((field) => !editData[field]);
+      setEditMissingFields(missing);
+      if (missing.length > 0) return;
+      if (
+        editErrors.nombre ||
+        editErrors.apellido ||
+        editErrors.dni ||
+        editErrors.telefono ||
+        editErrors.legajo
+      ) {
+        return;
+      }
+      if (editData.dni && editData.dni.length > 8) return;
+      payload = { ...editData, dni: normalizeDni(editData.dni) };
+    }
     try {
       if (editType === "cliente") {
-        const updated = await actualizarCliente(editData.id, editData);
+        const updated = await actualizarCliente(payload.id, payload);
+        const nextCliente =
+          updated && updated.id ? updated : { ...payload, id: payload.id };
         setClientes((prev) =>
-          prev.map((c) => (c.id === updated.id ? updated : c))
+          prev.map((c) => (c.id === payload.id ? nextCliente : c))
         );
       } else {
-        const updated = await actualizarEmpleado(editData.id, editData);
+        const updated = await actualizarEmpleado(payload.id, payload);
+        const nextEmpleado =
+          updated && updated.id ? updated : { ...payload, id: payload.id };
         setEmpleados((prev) =>
-          prev.map((e) => (e.id === updated.id ? updated : e))
+          prev.map((e) => (e.id === payload.id ? nextEmpleado : e))
         );
       }
       setEditOpen(false);
@@ -141,27 +298,46 @@ const PersonasTabs = () => {
     <>
       <TextField
         margin="dense"
-        label="Nombre"
+        label="Nombre *"
         name="nombre"
         fullWidth
         value={editData?.nombre || ""}
         onChange={handleEditChange}
+        error={Boolean(editErrors.nombre) || (editSubmitAttempted && !editData?.nombre)}
+        helperText={
+          editSubmitAttempted && !editData?.nombre
+            ? "Nombre obligatorio."
+            : editErrors.nombre
+        }
       />
       <TextField
         margin="dense"
-        label="Apellido"
+        label="Apellido *"
         name="apellido"
         fullWidth
         value={editData?.apellido || ""}
         onChange={handleEditChange}
+        error={Boolean(editErrors.apellido) || (editSubmitAttempted && !editData?.apellido)}
+        helperText={
+          editSubmitAttempted && !editData?.apellido
+            ? "Apellido obligatorio."
+            : editErrors.apellido
+        }
       />
       <TextField
         margin="dense"
-        label="DNI"
+        label="DNI *"
         name="dni"
         fullWidth
         value={editData?.dni || ""}
         onChange={handleEditChange}
+        onBlur={handleEditDniBlur}
+        error={Boolean(editErrors.dni) || (editSubmitAttempted && !editData?.dni)}
+        helperText={
+          editSubmitAttempted && !editData?.dni
+            ? "DNI obligatorio."
+            : editErrors.dni
+        }
       />
       <TextField
         margin="dense"
@@ -170,6 +346,9 @@ const PersonasTabs = () => {
         fullWidth
         value={editData?.telefono || ""}
         onChange={handleEditChange}
+        error={Boolean(editErrors.telefono)}
+        helperText={editErrors.telefono}
+        inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
       />
       <TextField
         margin="dense"
@@ -198,11 +377,17 @@ const PersonasTabs = () => {
       <TextField
         select
         margin="dense"
-        label="Tipo de cliente"
+        label="Tipo de cliente *"
         name="tipoCliente"
         fullWidth
         value={editData?.tipoCliente || ""}
         onChange={handleEditChange}
+        error={editSubmitAttempted && !editData?.tipoCliente}
+        helperText={
+          editSubmitAttempted && !editData?.tipoCliente
+            ? "Tipo de cliente obligatorio."
+            : ""
+        }
       >
         <MenuItem value="OCASIONAL">Ocasional</MenuItem>
         <MenuItem value="FRECUENTE">Frecuente</MenuItem>
@@ -215,27 +400,47 @@ const PersonasTabs = () => {
     <>
       <TextField
         margin="dense"
-        label="Nombre"
+        label="Nombre *"
         name="nombre"
         fullWidth
         value={editData?.nombre || ""}
         onChange={handleEditChange}
+        error={Boolean(editErrors.nombre) || (editSubmitAttempted && !editData?.nombre)}
+        helperText={
+          editSubmitAttempted && !editData?.nombre
+            ? "Nombre obligatorio."
+            : editErrors.nombre
+        }
       />
       <TextField
         margin="dense"
-        label="Apellido"
+        label="Apellido *"
         name="apellido"
         fullWidth
         value={editData?.apellido || ""}
         onChange={handleEditChange}
+        error={Boolean(editErrors.apellido) || (editSubmitAttempted && !editData?.apellido)}
+        helperText={
+          editSubmitAttempted && !editData?.apellido
+            ? "Apellido obligatorio."
+            : editErrors.apellido
+        }
       />
       <TextField
         margin="dense"
-        label="DNI"
+        label="DNI *"
         name="dni"
         fullWidth
         value={editData?.dni || ""}
         onChange={handleEditChange}
+        onBlur={handleEditDniBlur}
+        error={Boolean(editErrors.dni) || (editSubmitAttempted && !editData?.dni)}
+        helperText={
+          editSubmitAttempted && !editData?.dni
+            ? "DNI obligatorio."
+            : editErrors.dni
+        }
+        inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
       />
       <TextField
         margin="dense"
@@ -244,14 +449,24 @@ const PersonasTabs = () => {
         fullWidth
         value={editData?.telefono || ""}
         onChange={handleEditChange}
+        error={Boolean(editErrors.telefono)}
+        helperText={editErrors.telefono}
+        inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
       />
       <TextField
         margin="dense"
-        label="Legajo"
+        label="Legajo *"
         name="legajo"
         fullWidth
         value={editData?.legajo || ""}
         onChange={handleEditChange}
+        error={Boolean(editErrors.legajo) || (editSubmitAttempted && !editData?.legajo)}
+        helperText={
+          editSubmitAttempted && !editData?.legajo
+            ? "Legajo obligatorio."
+            : editErrors.legajo
+        }
+        inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
       />
       <TextField
         margin="dense"
@@ -264,11 +479,17 @@ const PersonasTabs = () => {
       <TextField
         select
         margin="dense"
-        label="Especialidad"
+        label="Especialidad *"
         name="especialidad"
         fullWidth
         value={editData?.especialidad || ""}
         onChange={handleEditChange}
+        error={editSubmitAttempted && !editData?.especialidad}
+        helperText={
+          editSubmitAttempted && !editData?.especialidad
+            ? "Especialidad obligatoria."
+            : ""
+        }
       >
         <MenuItem value="RECTIFICADOR">Rectificador</MenuItem>
         <MenuItem value="MANTENIMIENTO">Mantenimiento</MenuItem>
@@ -532,6 +753,41 @@ const PersonasTabs = () => {
         </DialogTitle>
         <DialogContent dividers>
           {editType === "cliente" ? clienteFields : empleadoFields}
+          {editType === "cliente" && editSubmitAttempted && editMissingFields.length > 0 && (
+            <Typography color="error" variant="body2" sx={{ mt: 1 }}>
+              Campos vacios:{" "}
+              {editMissingFields
+                .map((field) => {
+                  const labels = {
+                    nombre: "Nombre",
+                    apellido: "Apellido",
+                    dni: "DNI",
+                    tipoCliente: "Tipo de cliente",
+                  };
+                  return labels[field] || field;
+                })
+                .join(", ")}
+              .
+            </Typography>
+          )}
+          {editType === "empleado" && editSubmitAttempted && editMissingFields.length > 0 && (
+            <Typography color="error" variant="body2" sx={{ mt: 1 }}>
+              Campos vacios:{" "}
+              {editMissingFields
+                .map((field) => {
+                  const labels = {
+                    nombre: "Nombre",
+                    apellido: "Apellido",
+                    dni: "DNI",
+                    especialidad: "Especialidad",
+                    legajo: "Legajo",
+                  };
+                  return labels[field] || field;
+                })
+                .join(", ")}
+              .
+            </Typography>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleEditClose}>Cancelar</Button>

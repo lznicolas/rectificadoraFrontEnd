@@ -78,7 +78,7 @@ const Header = () => {
             anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
             transformOrigin={{ vertical: "top", horizontal: "left" }}
           >
-            <MenuItem onClick={() => goTo("/repuesto")}>Repuestos</MenuItem>
+            <MenuItem onClick={() => goTo("/articulos")}>Articulos</MenuItem>
             <MenuItem onClick={() => goTo("/tabpersona")}>Personas</MenuItem>
             <MenuItem onClick={() => goTo("/trabajos")}>Trabajos</MenuItem>
           </Menu>
@@ -117,7 +117,7 @@ const Header = () => {
             open={Boolean(anchorElSoluciones)}
             onClose={handleSolucionesClose}
           >
-            <MenuItem onClick={() => goTo("/repuesto")}>Repuestos</MenuItem>
+            <MenuItem onClick={() => goTo("/articulos")}>Articulos</MenuItem>
             <MenuItem onClick={() => goTo("/tabpersona")}>Personas</MenuItem>
             <MenuItem onClick={() => goTo("/trabajos")}>Trabajos</MenuItem>
           </Menu>

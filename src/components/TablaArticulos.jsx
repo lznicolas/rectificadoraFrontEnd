@@ -4,7 +4,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import InventoryIcon  from "@mui/icons-material/Inventory";
 
-const TablaRepuestos = ({repuestos,onEditar,onEliminar,onActualizarStock})=>{
+const TablaArticulos = ({articulos,onEditar,onEliminar,onActualizarStock})=>{
     return(
         <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 3, border: "1px solid rgba(30,58,138,0.12)" }}>
             <Table>
@@ -13,25 +13,31 @@ const TablaRepuestos = ({repuestos,onEditar,onEliminar,onActualizarStock})=>{
                         <TableCell><strong>Codigo</strong></TableCell>
                         <TableCell><strong>Titulo</strong></TableCell>
                         <TableCell><strong>Descripcion</strong></TableCell>
+                        <TableCell><strong>Precio unitario</strong></TableCell>
+                        <TableCell><strong>Categoria</strong></TableCell>
                         <TableCell><strong>Ubicacion</strong></TableCell>
                         <TableCell><strong>Acciones</strong></TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    {repuestos.map((repuesto)=>(
-                        <TableRow key  ={repuesto.id} hover>
-                            <TableCell>{repuesto.codigoDeProducto}</TableCell>
-                            <TableCell>{repuesto.titulo}</TableCell>
-                            <TableCell>{repuesto.descripcion}</TableCell>
-                            <TableCell>{repuesto.ubicacion}</TableCell>
+                    {articulos.map((articulo)=>(
+                        <TableRow key  ={articulo.id} hover>
+                            <TableCell>{articulo.codigoDeProducto}</TableCell>
+                            <TableCell>{articulo.titulo}</TableCell>
+                            <TableCell>{articulo.descripcion}</TableCell>
                             <TableCell>
-                                <IconButton color="primary" onClick={()=>onEditar(repuesto)}>
+                                {articulo.precioUnitario != null ? `$ ${Number(articulo.precioUnitario).toFixed(2)}` : "—"}
+                            </TableCell>
+                            <TableCell>{articulo.categoria || "—"}</TableCell>
+                            <TableCell>{articulo.ubicacion}</TableCell>
+                            <TableCell>
+                                <IconButton color="primary" onClick={()=>onEditar(articulo)}>
                                     <EditIcon/>
                                 </IconButton>
-                                <IconButton color="error" onClick={()=> onEliminar(repuesto)}>
+                                <IconButton color="error" onClick={()=> onEliminar(articulo)}>
                                     <DeleteIcon/>
                                 </IconButton>
-                                <Button variant="outlined" color="secondary" size="small" onClick={()=> onActualizarStock(repuesto)}>
+                                <Button variant="outlined" color="secondary" size="small" onClick={()=> onActualizarStock(articulo)}>
                                     <InventoryIcon/> Ver Stock
                                 </Button>
                             </TableCell>
@@ -43,4 +49,4 @@ const TablaRepuestos = ({repuestos,onEditar,onEliminar,onActualizarStock})=>{
     );
 };
 
-export default TablaRepuestos;
+export default TablaArticulos;

@@ -1,14 +1,15 @@
 import React from "react";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
 import { Box, CssBaseline } from "@mui/material";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
-import Repuestos from "./pages/Repuestos";
+import Articulos from "./pages/Articulos";
 import Presentacion from "./pages/Presentacion";
 import FormularioCliente from "./pages/FormularioCliente";
 import FormularioEmpleado from "./pages/FormularioEmpleado";
 import PersonasTabs from "./pages/PersonasTabs";
 import Trabajos from "./pages/Trabajos";
+import ReporteTrabajo from "./pages/ReporteTrabajo";
 import "./App.css";
 function App() {
   return (
@@ -38,12 +39,15 @@ function App() {
           }}
         >
           <Routes>
-            <Route path="/repuesto" element={<Repuestos />} />
+            <Route path="/" element={<Navigate to="/home" replace />} />
+            <Route path="/articulos" element={<Articulos />} />
             <Route path="/home" element={<Presentacion />} />
             <Route path="/formucliente" element={<FormularioCliente />} />
             <Route path="/formuempleado" element={<FormularioEmpleado />} />
             <Route path="/tabpersona" element={<PersonasTabs />} />
             <Route path="/trabajos" element={<Trabajos />} />
+            <Route path="/trabajos/:id/reporte" element={<ReporteTrabajo />} />
+            <Route path="*" element={<Presentacion />} />
           </Routes>
         </Box>
 

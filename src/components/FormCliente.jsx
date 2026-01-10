@@ -46,6 +46,14 @@ const provinciasArgentina = [
 const FormCliente = ({ onSaved }) => {
   const [cuilPrefix, setCuilPrefix] = useState("");
   const [cuilSuffix, setCuilSuffix] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({
+    nombre: "",
+    apellido: "",
+    dni: "",
+    telefono: "",
+  });
+  const [missingFields, setMissingFields] = useState([]);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
   const [formData, setFormData] = useState({
     apellido: "",
     nombre: "",
@@ -71,6 +79,12 @@ const FormCliente = ({ onSaved }) => {
   const sanitizeLetters = (text) =>
     text.replace(/[^a-zA-ZÁÉÍÓÚáéíóúñÑüÜ\s]/g, "");
   const sanitizeNumbers = (text) => text.replace(/[^0-9]/g, "");
+  const normalizeDni = (value) => {
+    const clean = sanitizeNumbers(value);
+    if (!clean) return "";
+    if (clean.length > 8) return clean;
+    return clean.padStart(8, "0");
+  };
 
   const composeCuil = (prefix, dniValue, suffix) => {
     const cleanDni = sanitizeNumbers(dniValue);
@@ -91,24 +105,53 @@ const FormCliente = ({ onSaved }) => {
     const { name, value } = event.target;
 
     if (name === "apellido" || name === "nombre") {
+      const sanitized = sanitizeLetters(value);
+      const hasInvalid = value !== sanitized;
       setFormData((prev) => ({
         ...prev,
-        [name]: sanitizeLetters(value),
+        [name]: sanitized,
+      }));
+      setFieldErrors((prev) => ({
+        ...prev,
+        [name]: hasInvalid ? `El ${name} no puede contener numeros.` : "",
       }));
       return;
     }
 
     if (name === "dni") {
       const cleanDni = sanitizeNumbers(value);
+      const hasInvalid = value !== cleanDni;
+      const tooLong = cleanDni.length > 8;
       setFormData((prev) => ({
         ...prev,
         dni: cleanDni,
         cuil: composeCuil(cuilPrefix, cleanDni, cuilSuffix),
       }));
+      setFieldErrors((prev) => ({
+        ...prev,
+        dni: tooLong
+          ? "El dni no puede ser mayor a 8 digitos"
+          : hasInvalid
+          ? "El dni solo puede tener numeros"
+          : "",
+      }));
       return;
     }
 
     if (["telefono", "limiteCredito", "saldo"].includes(name)) {
+      if (name === "telefono") {
+        const cleanPhone = sanitizeNumbers(value);
+        const hasInvalid = value !== cleanPhone;
+        setFormData((prev) => ({
+          ...prev,
+          [name]: cleanPhone,
+        }));
+        setFieldErrors((prev) => ({
+          ...prev,
+          telefono: hasInvalid ? "El telefono solo puede tener numeros." : "",
+        }));
+        return;
+      }
       setFormData((prev) => ({
         ...prev,
         [name]: sanitizeNumbers(value),
@@ -155,6 +198,16 @@ const FormCliente = ({ onSaved }) => {
     }));
   };
 
+  const handleDniBlur = () => {
+    const normalized = normalizeDni(formData.dni);
+    if (!normalized || normalized === formData.dni) return;
+    setFormData((prev) => ({
+      ...prev,
+      dni: normalized,
+      cuil: composeCuil(cuilPrefix, normalized, cuilSuffix),
+    }));
+  };
+
   const handleCuilChange = (event) => {
     const digits = sanitizeNumbers(event.target.value);
     const dniValue = formData.dni;
@@ -171,12 +224,22 @@ const FormCliente = ({ onSaved }) => {
   };
 
   const handleGuardarCliente = async () => {
-    if (!formData.apellido || !formData.nombre || !formData.dni || !formData.tipoCliente) {
-      alert("Completa los campos obligatorios marcados con *");
+    setSubmitAttempted(true);
+    const required = ["apellido", "nombre", "dni", "tipoCliente"];
+    const missing = required.filter((field) => !formData[field]);
+    setMissingFields(missing);
+    if (missing.length > 0) {
       return;
     }
+    if (fieldErrors.nombre || fieldErrors.apellido || fieldErrors.dni || fieldErrors.telefono) {
+      return;
+    }
+    if (formData.dni && formData.dni.length > 8) {
+      return;
+    }
+    const normalizedDni = normalizeDni(formData.dni);
     try {
-      await agregarCliente(formData);
+      await agregarCliente({ ...formData, dni: normalizedDni });
       alert("Cliente creado correctamente ✅");
       if (onSaved) {
         onSaved();
@@ -204,6 +267,9 @@ const FormCliente = ({ onSaved }) => {
       });
       setCuilPrefix("");
       setCuilSuffix("");
+      setFieldErrors({ nombre: "", apellido: "", dni: "", telefono: "" });
+      setMissingFields([]);
+      setSubmitAttempted(false);
     } catch (error) {
       console.error("Error al guardar Cliente:", error);
       alert("❌ Error al crear el Cliente");
@@ -245,6 +311,12 @@ const FormCliente = ({ onSaved }) => {
                 name="apellido"
                 value={formData.apellido}
                 onChange={handleChange}
+                error={Boolean(fieldErrors.apellido) || (submitAttempted && !formData.apellido)}
+                helperText={
+                  submitAttempted && !formData.apellido
+                    ? "Apellido obligatorio."
+                    : fieldErrors.apellido
+                }
                 required
               />
             </Grid>
@@ -255,6 +327,12 @@ const FormCliente = ({ onSaved }) => {
                 name="nombre"
                 value={formData.nombre}
                 onChange={handleChange}
+                error={Boolean(fieldErrors.nombre) || (submitAttempted && !formData.nombre)}
+                helperText={
+                  submitAttempted && !formData.nombre
+                    ? "Nombre obligatorio."
+                    : fieldErrors.nombre
+                }
                 required
               />
             </Grid>
@@ -265,6 +343,13 @@ const FormCliente = ({ onSaved }) => {
                 name="dni"
                 value={formData.dni}
                 onChange={handleChange}
+                onBlur={handleDniBlur}
+                error={Boolean(fieldErrors.dni) || (submitAttempted && !formData.dni)}
+                helperText={
+                  submitAttempted && !formData.dni
+                    ? "DNI obligatorio."
+                    : fieldErrors.dni
+                }
                 required
                 inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
               />
@@ -286,6 +371,8 @@ const FormCliente = ({ onSaved }) => {
                 name="telefono"
                 value={formData.telefono}
                 onChange={handleChange}
+                error={Boolean(fieldErrors.telefono)}
+                helperText={fieldErrors.telefono}
                 inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
               />
             </Grid>
@@ -421,12 +508,13 @@ const FormCliente = ({ onSaved }) => {
           <Grid container spacing={2}>
           <Grid item xs={12} sm={4}>
             <FormControl fullWidth>
-              <InputLabel>Tipo de Cliente *</InputLabel>
+              <InputLabel error={submitAttempted && !formData.tipoCliente}>Tipo de Cliente *</InputLabel>
               <Select
                 label="Tipo de Cliente *"
                 name="tipoCliente"
                 value={formData.tipoCliente}
                 onChange={handleChange}
+                error={submitAttempted && !formData.tipoCliente}
                 required
               >
                 <MenuItem value="" disabled>
@@ -474,6 +562,24 @@ const FormCliente = ({ onSaved }) => {
           </Grid>
         </CardContent>
       </Card>
+
+      {submitAttempted && missingFields.length > 0 && (
+        <Typography color="error" variant="body2">
+          Campos vacios:{" "}
+          {missingFields
+            .map((field) => {
+              const labels = {
+                apellido: "Apellido",
+                nombre: "Nombre",
+                dni: "DNI",
+                tipoCliente: "Tipo de cliente",
+              };
+              return labels[field] || field;
+            })
+            .join(", ")}
+          .
+        </Typography>
+      )}
 
       <Button
         variant="contained"

@@ -1,136 +1,138 @@
 import React, { useEffect, useState } from "react";
-import { actualizarRepuesto, actualizarStock, obtenerRepuestos,obtenerStock,agregarRepuesto, eliminarRepuesto } from "../services/api";
-import TablaRepuestos from "../components/TablaRepuestos";
+import { actualizarArticulo, actualizarStock, obtenerArticulos, obtenerStock, agregarArticulo, eliminarArticulo } from "../services/api";
+import TablaArticulos from "../components/TablaArticulos";
 import { Container, Typography,Modal,Box,TextField,Button, FormControl, MenuItem,Select,InputLabel, Paper, Stack, Divider } from "@mui/material";
 import SearchBar from "../components/SearchBar";
 import CreateButton from "../components/CreateButton";
-const Repuestos = () => {
-  const [repuestos, setRepuestos] = useState([]);
-  const [todosLosRepuestos, setTodosLosRepuestos] = useState([]);
+const Articulos = () => {
+  const [articulos, setArticulos] = useState([]);
+  const [todosLosArticulos, setTodosLosArticulos] = useState([]);
   const [modalOpen,setModalOpen] = useState(false);
-  const [repuestoSeleccionado, setRepuestosSeleccionado] = useState(null);
+  const [articuloSeleccionado, setArticuloSeleccionado] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [modalAgregaOpen, setModalAgregaOpen] = useState(false);
   const [modalEliminarOpen, setModalEliminarOpen] = useState(false);
-  const [repuestoAEliminar, setRepuestoAEliminar] = useState(null);
+  const [articuloAEliminar, setArticuloAEliminar] = useState(null);
   const [stockModalOpen, setStockModalOpen] = useState(false);
   const [stockSeleccionado, setStockSeleccionado] = useState(null);
   const [stockActual, setStockActual] = useState(0);
   const [ajusteStock, setAjusteStock] = useState("");
   const [errorModalOpen, setErrorModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [nuevoRepuesto, setNuevoRepuesto] = useState({
+  const [nuevoArticulo, setNuevoArticulo] = useState({
     titulo:"",
     descripcion:"",
     ubicacion:"",
-    codigoDeProducto:""
+    codigoDeProducto:"",
+    precioUnitario:"",
+    categoria:""
   });
 
-//Cargar repuesto al inicio
+//Cargar articulos al inicio
   useEffect(() => {
     const fetchData = async () => {
       try{
-        const data = await obtenerRepuestos();
+        const data = await obtenerArticulos();
         console.log("Datos obtenidos",data);
-        setRepuestos(data);
-        setTodosLosRepuestos(data);
+        setArticulos(data);
+        setTodosLosArticulos(data);
       }catch(error){
-        console.error("Error obteniendo respuestos", error)
+        console.error("Error obteniendo articulos", error)
       } 
     };
     fetchData();
   }, []);
 
-  //Filtrar repuesto cuando cambia searchText(Barra de busqueda)
+  //Filtrar articulos cuando cambia searchText(Barra de busqueda)
   useEffect(()=> {
     if (searchText.trim() === ""){
-      setRepuestos(todosLosRepuestos);
+      setArticulos(todosLosArticulos);
     }else{
-      const filtered = todosLosRepuestos.filter((rep)=>
+      const filtered = todosLosArticulos.filter((rep)=>
       rep.titulo.toLowerCase().includes(searchText.toLowerCase())||
     rep.codigoDeProducto.toLowerCase().includes(searchText.toLowerCase())
   );
-  setRepuestos(filtered);
+  setArticulos(filtered);
     }
-  },[searchText, todosLosRepuestos]);
+  },[searchText, todosLosArticulos]);
 
-  //Funcion para editar repuesto | Abrir el modal con los datos del repuesto
-  const handleEditar = (repuesto) => {
-    setRepuestosSeleccionado({...repuesto});
+  //Funcion para editar articulo | Abrir el modal con los datos del articulo
+  const handleEditar = (articulo) => {
+    setArticuloSeleccionado({...articulo});
     setModalOpen(true);
   };
 
   //Funcion para cerrar el modal de edicion
   const handleCloseModal = ()=>{
     setModalOpen(false);
-    setRepuestosSeleccionado(null);
+    setArticuloSeleccionado(null);
   }
 
-  //Manejo de Inputs actulizarRepuesto
+  //Manejo de Inputs actualizarArticulo
   const handleChange = (e)=>{
-    if(!repuestoSeleccionado) return;
-    setRepuestosSeleccionado((prev)=>({
+    if(!articuloSeleccionado) return;
+    setArticuloSeleccionado((prev)=>({
       ...prev,
-      [e.target.name]: e.target.value,
+      [e.target.name]: e.target.name === "precioUnitario" ? e.target.value : e.target.value,
     }));
   };
 
-  //Modal creacion de repuesto
+  //Modal creacion de articulo
   const handleOpenAgregarModal=()=>{
-    setNuevoRepuesto({titulo:"",descripcion:"",ubicacion:"",codigoDeProducto:""});
+    setNuevoArticulo({titulo:"",descripcion:"",ubicacion:"",codigoDeProducto:"", precioUnitario:"", categoria:""});
     setModalAgregaOpen(true);
   };
 
-  //Modal repuesto cerrar
+  //Modal articulo cerrar
   const handleCloseAgregarModal = ()=>{
     setModalAgregaOpen(false);
   };
 
-  const handleChangeNuevoRepuesto=(e)=>{
-    setNuevoRepuesto({...nuevoRepuesto,
+  const handleChangeNuevoArticulo=(e)=>{
+    setNuevoArticulo({...nuevoArticulo,
       [e.target.name]: e.target.value
     });
   };
 
-  //GuardarNuevoRepuesto
-  const handleGuardarNuevoRepuesto = async () =>{
+  //GuardarNuevoArticulo
+  const handleGuardarNuevoArticulo = async () =>{
     try{
-      await agregarRepuesto(nuevoRepuesto);
+      await agregarArticulo(nuevoArticulo);
       setModalAgregaOpen(false);
-      alert("Repuesto agregado Correctamente");
+      alert("Articulo agregado correctamente");
       handleCloseAgregarModal();
-      const data = await obtenerRepuestos();
-      setRepuestos(data);
+      const data = await obtenerArticulos();
+      setArticulos(data);
     }catch(error){
-      alert("Error al agregar Repuesto");
+      alert("Error al agregar articulo");
     }
   };
 
   //Funcion para guardar los cambios
   const handleGuardar= async() =>{
-    if(!repuestoSeleccionado) return;
+    if(!articuloSeleccionado) return;
     try{
-      await actualizarRepuesto(repuestoSeleccionado.id, repuestoSeleccionado);
-      //Actuliza el repuesto
-      setRepuestos((prevRepuestos)=>
-      prevRepuestos.map((rep)=> (rep.id === repuestoSeleccionado.id ? repuestoSeleccionado: rep))
+      await actualizarArticulo(articuloSeleccionado.id, articuloSeleccionado);
+      //Actuliza el articulo
+      setArticulos((prevArticulos)=>
+      prevArticulos.map((rep)=> (rep.id === articuloSeleccionado.id ? articuloSeleccionado: rep))
     );
-      alert("Repuesto actualizado correctamente");
+      alert("Articulo actualizado correctamente");
       handleCloseModal();
     }catch (error){
-      console.error("Error al actulizar el repuesto",error);
+      console.error("Error al actulizar el articulo",error);
       console.log("Detalles del error", error.response)
-      alert("Error al actulizar el repuesto");
+      alert("Error al actualizar el articulo");
     }
   };
 
   //Funcion para ver y actualizar el stock
-  const handleActualizarStock = async (repuesto)=>{
-    setStockSeleccionado(repuesto);
+  const handleActualizarStock = async (articulo)=>{
+    setStockSeleccionado(articulo);
     setAjusteStock("");
     setStockModalOpen(true);
     try{
-      const stockResponse = await obtenerStock(repuesto.codigoDeProducto);
+      const stockResponse = await obtenerStock(articulo.codigoDeProducto);
       setStockActual(stockResponse?.cantidad ?? 0);
     }catch(error){
       setStockActual(0);
@@ -168,15 +170,15 @@ const Repuestos = () => {
     }
   };
     
-//Eliminar Repuesto
-  const handleEliminar = (repuesto)=>{
-    setRepuestoAEliminar(repuesto);
+//Eliminar articulo
+  const handleEliminar = (articulo)=>{
+    setArticuloAEliminar(articulo);
     setModalEliminarOpen(true);
   };
 
   const handleCloseEliminarModal = ()=>{
     setModalEliminarOpen(false);
-    setRepuestoAEliminar(null);
+    setArticuloAEliminar(null);
   };
 
   const handleCloseErrorModal = () => {
@@ -185,11 +187,11 @@ const Repuestos = () => {
   };
 
   const handleConfirmarEliminar = async ()=>{
-    if(!repuestoAEliminar) return;
+    if(!articuloAEliminar) return;
     try{
-      await eliminarRepuesto(repuestoAEliminar.id);
-      setRepuestos(prev => prev.filter(r => r.id !== repuestoAEliminar.id));
-      alert("Repuesto eliminado de forma correcta");
+      await eliminarArticulo(articuloAEliminar.id);
+      setArticulos(prev => prev.filter(r => r.id !== articuloAEliminar.id));
+      alert("Articulo eliminado correctamente");
     }catch(error){
       const apiMessage = error.response?.data;
       const parsedMessage = typeof apiMessage === "string"
@@ -198,7 +200,7 @@ const Repuestos = () => {
 
       setErrorMessage(
         parsedMessage ||
-        "No se puede eliminar el repuesto porque tiene stock registrado. Ajusta el stock a 0 antes de eliminarlo."
+        "No se puede eliminar el articulo porque tiene stock registrado. Ajusta el stock a 0 antes de eliminarlo."
       );
       setErrorModalOpen(true);
     }finally{
@@ -237,7 +239,7 @@ const Repuestos = () => {
         >
           <Box>
             <Typography variant="h5" sx={{ fontWeight: 700 }}>
-              Repuestos y stock
+              Articulos y stock
             </Typography>
             <Typography variant="body2" color="text.secondary">
               Gestiona el catálogo y las existencias en un solo lugar.
@@ -251,15 +253,15 @@ const Repuestos = () => {
 
         <Divider sx={{ mb: 2 }} />
 
-        <TablaRepuestos
-          repuestos={repuestos}
+        <TablaArticulos
+          articulos={articulos}
           onEditar={handleEditar}
           onEliminar={handleEliminar}
           onActualizarStock={handleActualizarStock}
         />
       </Paper>
 
-      {/* Modal para editar repuesto */}
+      {/* Modal para editar articulo */}
       <Modal open={modalOpen} onClose={handleCloseModal}>
         <Box
           sx={{
@@ -276,14 +278,36 @@ const Repuestos = () => {
           }}
         >
           <Typography variant="h6" sx={{ color: "primary.main", fontWeight: 700 }}>
-            Editar repuesto
+            Editar articulo
           </Typography>
-          <TextField fullWidth margin="normal" label="Título" name="titulo" value={repuestoSeleccionado?.titulo || ""} onChange={handleChange} />
-          <TextField fullWidth margin="normal" label="Descripción" name="descripcion" value={repuestoSeleccionado?.descripcion || ""} onChange={handleChange} />
+          <TextField fullWidth margin="normal" label="Título" name="titulo" value={articuloSeleccionado?.titulo || ""} onChange={handleChange} />
+          <TextField fullWidth margin="normal" label="Descripción" name="descripcion" value={articuloSeleccionado?.descripcion || ""} onChange={handleChange} />
+          <TextField
+            fullWidth
+            margin="normal"
+            label="Precio unitario"
+            name="precioUnitario"
+            type="number"
+            inputProps={{ min: 0, step: "0.01" }}
+            value={articuloSeleccionado?.precioUnitario ?? ""}
+            onChange={handleChange}
+          />
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Categoria</InputLabel>
+            <Select
+              name="categoria"
+              value={articuloSeleccionado?.categoria || ""}
+              label="Categoria"
+              onChange={handleChange}
+            >
+              <MenuItem value="REPUESTO">REPUESTO</MenuItem>
+              <MenuItem value="CONSUMIBLE">CONSUMIBLE</MenuItem>
+            </Select>
+          </FormControl>
           <FormControl fullWidth margin="normal">
             <InputLabel>Ubicación</InputLabel>
             <Select name="ubicacion"
-                    value={repuestoSeleccionado?.ubicacion || ""}
+                    value={articuloSeleccionado?.ubicacion || ""}
                     label="Ubicacion"
                     onChange={handleChange}>
                       <MenuItem value="ALTA">ALTA</MenuItem>
@@ -298,7 +322,7 @@ const Repuestos = () => {
           </Box>
         </Box>
       </Modal>
-      {/* Modal para agregar repuesto */}
+      {/* Modal para agregar articulo */}
       <Modal open={modalAgregaOpen} onClose={handleCloseAgregarModal}>
         <Box
           sx={{
@@ -314,30 +338,52 @@ const Repuestos = () => {
             border: "1px solid rgba(30,58,138,0.15)",
           }}
         >
-          <Typography variant="h6" sx={{color : "primary.main", fontWeight: 700}}>Agregar repuesto</Typography>
-          <TextField fullWidth margin="normal" label="Título" name="titulo" value={nuevoRepuesto.titulo} onChange={handleChangeNuevoRepuesto} />
-          <TextField fullWidth margin="normal" label="Descripción" name="descripcion" value={nuevoRepuesto.descripcion} onChange={handleChangeNuevoRepuesto} />
+          <Typography variant="h6" sx={{color : "primary.main", fontWeight: 700}}>Agregar articulo</Typography>
+          <TextField fullWidth margin="normal" label="Título" name="titulo" value={nuevoArticulo.titulo} onChange={handleChangeNuevoArticulo} />
+          <TextField fullWidth margin="normal" label="Descripción" name="descripcion" value={nuevoArticulo.descripcion} onChange={handleChangeNuevoArticulo} />
+          <TextField
+            fullWidth
+            margin="normal"
+            label="Precio unitario"
+            name="precioUnitario"
+            type="number"
+            inputProps={{ min: 0, step: "0.01" }}
+            value={nuevoArticulo.precioUnitario}
+            onChange={handleChangeNuevoArticulo}
+          />
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Categoria</InputLabel>
+            <Select
+              name="categoria"
+              value={nuevoArticulo.categoria}
+              label="Categoria"
+              onChange={handleChangeNuevoArticulo}
+            >
+              <MenuItem value="REPUESTO">REPUESTO</MenuItem>
+              <MenuItem value="CONSUMIBLE">CONSUMIBLE</MenuItem>
+            </Select>
+          </FormControl>
           <FormControl fullWidth margin="normal">
             <InputLabel>Ubicación</InputLabel>
             <Select name="ubicacion"
-                    value={nuevoRepuesto.ubicacion}
+                    value={nuevoArticulo.ubicacion}
                     label="Ubicacion"
-                    onChange={handleChangeNuevoRepuesto}>
+                    onChange={handleChangeNuevoArticulo}>
                       <MenuItem value="ALTA">ALTA</MenuItem>
                       <MenuItem value="MEDIA">MEDIA</MenuItem>
                       <MenuItem value="BAJA">BAJA</MenuItem>
                       <MenuItem value="NINGUNA">NINGUNA</MenuItem>
                     </Select>
           </FormControl>
-          <TextField fullWidth margin="normal" label="Código" name="codigoDeProducto" value={nuevoRepuesto.codigoDeProducto} onChange={handleChangeNuevoRepuesto} />
+          <TextField fullWidth margin="normal" label="Código" name="codigoDeProducto" value={nuevoArticulo.codigoDeProducto} onChange={handleChangeNuevoArticulo} />
           <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, marginTop: 2 }}>
-            <Button variant="contained" color="primary" onClick={handleGuardarNuevoRepuesto}>Guardar</Button>
+            <Button variant="contained" color="primary" onClick={handleGuardarNuevoArticulo}>Guardar</Button>
             <Button variant="outlined" color="secondary" onClick={handleCloseAgregarModal}>Cancelar</Button>
           </Box>
         </Box>
       </Modal>
 
-      {/* Modal Eliminar repuesto */}
+      {/* Modal Eliminar articulo */}
       <Modal open={modalEliminarOpen} onClose={handleCloseEliminarModal}>
         <Box
           sx={{
@@ -353,10 +399,10 @@ const Repuestos = () => {
             border: "1px solid rgba(30,58,138,0.15)",
           }}
         >
-          <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>Eliminar repuesto</Typography>
+          <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>Eliminar articulo</Typography>
           <Typography variant="body2" sx={{ mb: 3 }}>
             ¿Seguro deseas eliminar{" "}
-            <strong>{repuestoAEliminar?.titulo}</strong>? Esta acción no se puede deshacer.
+            <strong>{articuloAEliminar?.titulo}</strong>? Esta acción no se puede deshacer.
           </Typography>
           <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
             <Button variant="outlined" onClick={handleCloseEliminarModal}>Cancelar</Button>
@@ -381,7 +427,7 @@ const Repuestos = () => {
             border: "1px solid rgba(30,58,138,0.15)",
           }}
         >
-          <Typography variant="h6" sx={{ fontWeight: 700, color: "primary.main" }}>Stock de repuesto</Typography>
+          <Typography variant="h6" sx={{ fontWeight: 700, color: "primary.main" }}>Stock de articulo</Typography>
           <Typography variant="body2" sx={{ mb: 2 }}>
             {stockSeleccionado?.titulo} ({stockSeleccionado?.codigoDeProducto})
           </Typography>
@@ -422,10 +468,10 @@ const Repuestos = () => {
           }}
         >
           <Typography variant="h6" sx={{ fontWeight: 700, color: "error.main" }}>
-            No se puede eliminar el repuesto
+            No se puede eliminar el articulo
           </Typography>
           <Typography variant="body2" sx={{ mt: 1, mb: 3 }}>
-            {errorMessage || "Ocurrió un problema al eliminar el repuesto."}
+            {errorMessage || "Ocurrió un problema al eliminar el articulo."}
           </Typography>
           <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
             <Button variant="contained" onClick={handleCloseErrorModal}>Entendido</Button>
@@ -436,5 +482,5 @@ const Repuestos = () => {
   );
 };
 
-export default Repuestos;
+export default Articulos;
 //nlamas

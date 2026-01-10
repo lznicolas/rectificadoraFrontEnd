@@ -1,30 +1,30 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:8080/api/repuestos";
+const API_URL = "http://localhost:8080/api/articulos";
 const API_URLEmpl = "http://localhost:8080/api/empleados";
 const API_URLCli = "http://localhost:8080/api/clientes";
 const API_URLTrab = "http://localhost:8080/api/trabajos";
 const API_URLEspec = `${API_URLEmpl}/especialidades`;
 const API_URLLegajoSugerido = `${API_URLEmpl}/legajos/sugerido`;
 
-//Funcion para obtener los repuestos
-export const obtenerRepuestos = async () => {
+//Funcion para obtener los articulos
+export const obtenerArticulos = async () => {
   try {
     const response = await axios.get(`${API_URL}/all`);
     return response.data;
   } catch (error) {
-    console.error("Error obteniendo repuestos", error);
+    console.error("Error obteniendo articulos", error);
     return [];
   }
 };
 
-//Actualizar los Repuestos
-export const actualizarRepuesto = async (id, repuesto) => {
+//Actualizar los articulos
+export const actualizarArticulo = async (id, articulo) => {
   try {
-    const response = await axios.put(`${API_URL}/${id}`, repuesto);
+    const response = await axios.put(`${API_URL}/${id}`, articulo);
     return response.data;
   } catch (error) {
-    console.error("Error actulizando repuesto", error);
+    console.error("Error actulizando articulo", error);
     throw error;
   }
 };
@@ -53,24 +53,24 @@ export const obtenerStock = async (codigo) => {
   }
 };
 
-//Agregar Repuesto
-export async function agregarRepuesto(repuesto) {
+//Agregar articulo
+export async function agregarArticulo(articulo) {
   try {
-    console.log("Enviando repuesto", repuesto);
-    const response = await axios.post(`${API_URL}`, repuesto);
+    console.log("Enviando articulo", articulo);
+    const response = await axios.post(`${API_URL}`, articulo);
     return response.data;
   } catch (error) {
-    console.error("Error en agregar Repuesto", error);
+    console.error("Error en agregar articulo", error);
     throw error;
   }
 }
-//Elimina un Repuesto
-export async function eliminarRepuesto(id) {
+//Elimina un articulo
+export async function eliminarArticulo(id) {
   try {
     const response = await axios.delete(`${API_URL}/${id}`);
     return response.data;
   } catch (error) {
-    console.error("Error eliminando Repuesto", error);
+    console.error("Error eliminando articulo", error);
     throw error;
   }
 }
@@ -123,3 +123,11 @@ export const actualizarTrabajo = async (id, trabajo) =>
   (await axios.put(`${API_URLTrab}/${id}`, trabajo)).data;
 export const eliminarTrabajo = async (id) =>
   (await axios.delete(`${API_URLTrab}/${id}`)).data;
+export const obtenerTrabajosPorCliente = async (clienteId) =>
+  (await axios.get(`${API_URLTrab}/cliente/${clienteId}`)).data;
+
+export const obtenerReporteTrabajo = async (trabajoId) =>
+  (await axios.get(`${API_URLTrab}/${trabajoId}/reporte`)).data;
+
+export const actualizarCostoManoDeObra = async (trabajoId, costoManoDeObra) =>
+  (await axios.patch(`${API_URLTrab}/${trabajoId}/costo-mano-obra`, { costoManoDeObra })).data;
