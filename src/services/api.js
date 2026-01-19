@@ -131,3 +131,6 @@ export const obtenerReporteTrabajo = async (trabajoId) =>
 
 export const actualizarCostoManoDeObra = async (trabajoId, costoManoDeObra) =>
   (await axios.patch(`${API_URLTrab}/${trabajoId}/costo-mano-obra`, { costoManoDeObra })).data;
+
+export const obtenerEmpresaConfig = async () =>
+  (await axios.get("http://localhost:8080/api/empresa-config")).data;
